@@ -3,13 +3,13 @@ using System.Collections.Generic;
 
 namespace activityCore.Models;
 
-public partial class File
+public partial class FileXproject
 {
     public int Id { get; set; }
 
-    public string? FileName { get; set; }
+    public int? ProjectId { get; set; }
 
-    public string? FilePath { get; set; }
+    public int? FileId { get; set; }
 
     public DateTime? CreateDate { get; set; }
 
@@ -17,5 +17,7 @@ public partial class File
 
     public bool? IsDelete { get; set; }
 
-    public virtual ICollection<FileXproject> FileXprojects { get; set; } = new List<FileXproject>();
+    public virtual File? File { get; set; }
+
+    public virtual Project? Project { get; set; }
 }

@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 using activityCore.Models;
 using File = activityCore.Models.File;
 
@@ -18,6 +20,8 @@ public partial class ActivityContext : DbContext
     public virtual DbSet<Activity> Activities { get; set; }
 
     public virtual DbSet<File> Files { get; set; }
+
+    public virtual DbSet<FileXproject> FileXprojects { get; set; }
 
     public virtual DbSet<Project> Projects { get; set; }
 
@@ -61,6 +65,26 @@ public partial class ActivityContext : DbContext
             entity.Property(e => e.CreateDate).HasColumnType("datetime");
             entity.Property(e => e.FileName).HasMaxLength(50);
             entity.Property(e => e.UpdateDate).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<FileXproject>(entity =>
+        {
+            entity.ToTable("FileXProject");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.CreateDate).HasColumnType("datetime");
+            entity.Property(e => e.FileId).HasColumnName("FileID");
+            entity.Property(e => e.IsDelete).HasColumnName("isDelete");
+            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
+            entity.Property(e => e.UpdateDate).HasColumnType("datetime");
+
+            entity.HasOne(d => d.File).WithMany(p => p.FileXprojects)
+                .HasForeignKey(d => d.FileId)
+                .HasConstraintName("FK_FileXProject_File");
+
+            entity.HasOne(d => d.Project).WithMany(p => p.FileXprojects)
+                .HasForeignKey(d => d.ProjectId)
+                .HasConstraintName("FK_FileXProject_Project");
         });
 
         modelBuilder.Entity<Project>(entity =>

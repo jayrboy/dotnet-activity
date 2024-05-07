@@ -1,6 +1,7 @@
 using activityCore.Data;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.Net.Http.Headers;
 
 namespace activityCore.Models
 {
@@ -23,5 +24,47 @@ namespace activityCore.Models
 
             return project;
         }
+
+        // Get All
+        public static List<Project> GetAll(ActivityContext db)
+        {
+            List<Project> projects = db.Projects.Where(e => e.IsDelete != true).ToList();
+            return projects;
+        }
+
+        //Get ID
+        public static Project GetById(ActivityContext db, int id)
+        {
+            Project? project = db.Projects.Where(q => q.Id == id && q.IsDelete != true).FirstOrDefault();
+            return project ?? new Project();
+        }
+
+        //  Update
+        public static Project Update(ActivityContext db, Project project)
+        {
+            project.UpdateDate = DateTime.Now;
+
+            db.Entry(project).State = EntityState.Modified;
+            // db.Projects.Update(project);
+
+            db.SaveChanges();
+            return project;
+        }
+
+        //  Delete ID
+        public static Project Delete(ActivityContext db, int id)
+        {
+            Project project = GetById(db, id);
+            project.IsDelete = true;
+            db.Entry(project).State = EntityState.Modified;
+
+            // db.Projects.Remove(project); // ลบในฐานข้อมูล
+
+            db.SaveChanges();
+
+            return project;
+        }
     }
+
+
 }
