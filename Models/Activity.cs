@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using activityCore.Data;
 
 namespace activityCore.Models;
 
@@ -21,7 +22,12 @@ public partial class Activity
 
     public virtual Activity? ActivityHeader { get; set; }
 
-    public virtual ICollection<Activity> InverseActivityHeader { get; set; } = new List<Activity>();
+    public virtual ICollection<Activity>? InverseActivityHeader { get; set; } = new List<Activity>();
 
     public virtual Project? Project { get; set; }
+
+    internal static List<Activity> Update(ActivityContext db, List<Activity> activity)
+    {
+        throw new NotImplementedException();
+    }
 }

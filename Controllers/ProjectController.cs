@@ -142,8 +142,8 @@ public class ProjectController : ControllerBase
     /// </response>
     /// <response code="400">Bad Request</response>
     /// <response code="500">Internal Server Error</response>
-    [HttpGet("{id}", Name = "GetEmployeeById")]
-    public ActionResult GetEmployeeById(int id)
+    [HttpGet("{id}", Name = "GetProjectById")]
+    public ActionResult GetProjectById(int id)
     {
         Project project = Project.GetById(_db, id);
         return Ok(new Response
