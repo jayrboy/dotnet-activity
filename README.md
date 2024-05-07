@@ -41,7 +41,7 @@ code .
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost; Database=Employee; Trusted_Connection=False; TrustServerCertificate=True; User ID=sa; Password=Password "
+    "DefaultConnection": "Server=localhost; Database=Activity; Trusted_Connection=False; TrustServerCertificate=True; User ID=sa; Password=Password "
   }
 }
 ```
@@ -49,7 +49,7 @@ code .
 ```sh
 dotnet build
 
-dotnet ef dbcontext scaffold "Data Source=BUMBIM\SQLEXPRESS;Initial Catalog=Employee;Integrated Security=True;Encrypt=True;Trust Server Certificate=True" Microsoft.EntityFrameworkCore.SqlServer --context-dir Data --output-dir Models --force
+dotnet ef dbcontext scaffold "Data Source=BUMBIM\SQLEXPRESS;Initial Catalog=Activity;Integrated Security=True;Encrypt=True;Trust Server Certificate=True" Microsoft.EntityFrameworkCore.SqlServer --context-dir Data --output-dir Models --force
 ```
 
 # Metadata (\*remark\*)
