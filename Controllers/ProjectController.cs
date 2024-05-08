@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using activityCore.Data;
 using activityCore.Models;
+using Microsoft.AspNetCore.Authorization;
 
+[Authorize]
 [ApiController]
 [Route("[controller]")]
 [Produces("application/json")]
