@@ -64,3 +64,10 @@ dotnet ef dbcontext scaffold "Data Source=BUMBIM\SQLEXPRESS;Initial Catalog=Acti
 - Update
 - Delete (Soft Delete)
 - Set Route Path
+
+# Jwt
+
+```sh
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
+dotnet add package System.IdentityModel.Tokens.Jwt
+```
