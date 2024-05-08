@@ -239,17 +239,17 @@ public class ActivityController : ControllerBase
     ///     "id": 1,
     ///     "projectId": 2,
     ///     "name": "Act1 Updated",
-    ///     "createDate": "2024-05-07T22:56:31.513",
-    ///     "updateDate": "2024-05-07T22:56:31.513",
+    ///     "createDate": "2024-05-08T12:04:35.2076172+07:00",
+    ///     "updateDate": "2024-05-08T12:04:35.2076172+07:00",
     ///     "isDelete": true,
     ///     "inverseActivityHeader": [
     ///         {
-    ///             "id": 2,
+    ///             "id": 3,
     ///             "projectId": 2,
     ///             "activityHeaderId": 1,
     ///             "name": "Act1.1 Updated",
-    ///             "createDate": "2024-05-07T22:56:31.513",
-    ///             "updateDate": "2024-05-07T22:56:31.513",
+    ///             "createDate": "2024-05-08T12:04:35.2076172+07:00",
+    ///             "updateDate": "2024-05-08T12:04:35.2076172+07:00",
     ///             "isDelete": true,
     ///             "inverseActivityHeader": []
     ///         }
@@ -264,19 +264,18 @@ public class ActivityController : ControllerBase
     [HttpPut(Name = "UpdateActivity")]
     public ActionResult UpdateActivity(Activity activity)
     {
-        activity.UpdateDate = DateTime.Now;
-        _db.Activities.Update(activity);
+        activity = Activity.Update(_db, activity);
         _db.SaveChanges();
-
 
         return Ok(new Response
         {
             Code = 200,
             Message = "Success",
             Data = activity
-
         });
+
     }
+
 
 
 }
