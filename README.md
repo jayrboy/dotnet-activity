@@ -13,6 +13,8 @@
   https://learn.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-ver16#download-ssms
 
 ```sh
+DBCC CHECKIDENT ('mytable', RESEED, 0)
+
 dotnet tool install --global dotnet-ef --version 8.*
 
 dotnet new webapi --use-controllers -o activityCore

@@ -75,9 +75,7 @@ public partial class ActivityContext : DbContext
         {
             entity.ToTable("File");
 
-            entity.Property(e => e.Id)
-                .ValueGeneratedNever()
-                .HasColumnName("ID");
+            entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.CreateDate).HasColumnType("datetime");
             entity.Property(e => e.FileName).HasMaxLength(50);
             entity.Property(e => e.UpdateDate).HasColumnType("datetime");
