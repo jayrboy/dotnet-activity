@@ -80,8 +80,20 @@ namespace activityCore.Models
                         Update(db, subActivity); // Update the subActivity recursively
                     }
                 }
+                db.SaveChanges();
             }
             return oldActivity;
         }
+
+        public static Activity Delete(ActivityContext db, int id)
+        {
+            Activity activity = GetById(db, id);
+            activity.IsDelete = true;
+            db.Entry(activity).State = EntityState.Modified;
+            db.SaveChanges();
+
+            return activity;
+        }
+
     }
 }

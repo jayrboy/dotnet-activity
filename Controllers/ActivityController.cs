@@ -265,7 +265,6 @@ public class ActivityController : ControllerBase
     public ActionResult UpdateActivity(Activity activity)
     {
         activity = Activity.Update(_db, activity);
-        _db.SaveChanges();
 
         return Ok(new Response
         {
@@ -276,6 +275,17 @@ public class ActivityController : ControllerBase
 
     }
 
+    /// <summary>
+    /// Delete ID
+    /// </summary>
+    /// <remarks></remarks>
+    /// <returns></returns>
+    [HttpDelete("{id}", Name = "DeleteActivityById")]
+    public ActionResult DeleteActivityById(int id)
+    {
+        Activity activity = Activity.Delete(_db, id);
 
+        return Ok(activity);
+    }
 
 }
