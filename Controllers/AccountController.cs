@@ -41,11 +41,11 @@ public class AccountController : ControllerBase
         public string? Password { get; set; }
 
         /// <summary>
-        /// Token of JWT
+        /// Role of User
         /// </summary>
-        /// <example>YourSecretKeyForAuthenticationOfApplication</example>
+        /// <example>user</example>
         /// <required>true</required>
-        public string? Token { get; set; }
+        public string? Role { get; set; }
     }
 
     /// <summary>
@@ -58,7 +58,7 @@ public class AccountController : ControllerBase
         {
             Username = AccountCreate.Username,
             Password = AccountCreate.Password,
-            Token = AccountCreate.Token,
+            Role = AccountCreate.Role,
         };
 
         user = Account.Create(_db, user);
@@ -104,6 +104,20 @@ public class AccountController : ControllerBase
     /// <summary>
     /// Update
     /// </summary>
+    /// <remarks>
+    /// Sample request:
+    /// ```json
+    /// {
+    ///     "id": 1,
+    ///     "username": "ChangeU",
+    ///     "password": "ChangeP",
+    ///     "createDate": "2024-05-08T14:57:20.942Z",
+    ///     "updateDate": "2024-05-08T14:57:20.942Z",
+    ///     "isDelete": false
+    /// }
+    /// ```
+    /// </remarks>
+    /// <returns></returns>
     [HttpPut(Name = "UpdateUser")]
     public ActionResult UpdateUser(Account user)
     {
@@ -171,6 +185,42 @@ public class AccountController : ControllerBase
     /// <summary>
     /// Login
     /// </summary>
+    /// <remarks>
+    /// Sample request:
+    /// ```json
+    /// {
+    ///     "id": 2,
+    ///     "username": "admin",
+    ///     "password": "1234",
+    ///     "role": "admin",
+    ///     "createDate": "2024-05-08T14:57:20.942Z",
+    ///     "updateDate": "2024-05-08T14:57:20.942Z",
+    ///     "isDelete": false
+    /// }
+    /// ```
+    /// </remarks>
+    /// <returns></returns>
+    /// <response code="200">
+    /// Success
+    ///  ```json
+    /// {
+    ///     "Code": 200,
+    ///     "Message": "Success",
+    ///     "Data": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6ImFkbWluIiwibmJmIjoxNzE1MTgwNzM0LCJleHAiOjE3MTUxODA3OTQsImlhdCI6MTcxNTE4MDczNCwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDAwIiwiYXVkIjoiaHR0cDovL2xvY2FsaG9zdDo4MDAwIn0.fJlV5TqX63mY0g9xHT48PH8W1rgARNocPbpaNjA8myQ"
+    /// }
+    /// ```
+    /// </response>
+    /// <response code="401">
+    /// Unauthorized
+    ///  ```json
+    /// {
+    ///     "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+    ///     "title": "Unauthorized",
+    ///     "status": 401,
+    ///     "traceId": "00-7856af05e8d849842fb14999ce754c4c-6e3b0369d3eb3642-00"
+    /// }
+    /// ```
+    /// </response>
     [HttpPost("login")]
     public IActionResult Login([FromBody] Account requestUser)
     {

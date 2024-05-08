@@ -45,7 +45,7 @@ public partial class ActivityContext : DbContext
             entity.Property(e => e.CreateDate).HasColumnType("datetime");
             entity.Property(e => e.IsDelete).HasColumnName("isDelete");
             entity.Property(e => e.Password).HasMaxLength(50);
-            entity.Property(e => e.Token).HasMaxLength(50);
+            entity.Property(e => e.Role).HasMaxLength(50);
             entity.Property(e => e.UpdateDate).HasColumnType("datetime");
             entity.Property(e => e.Username).HasMaxLength(50);
         });
