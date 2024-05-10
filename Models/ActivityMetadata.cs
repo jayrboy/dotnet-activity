@@ -20,6 +20,7 @@ namespace activityCore.Models
             activity.UpdateDate = DateTime.Now;
             activity.IsDelete = false;
             db.Activities.Add(activity);
+            db.SaveChanges();
 
             return activity;
         }
@@ -34,6 +35,26 @@ namespace activityCore.Models
             foreach (Activity subActivity in activity.InverseActivityHeader)
             {
                 SetActivitiesCreate(subActivity);
+            }
+        }
+
+        // Set Activities
+        public static void SetActivities(Project project, ICollection<Activity> mainActivity, ICollection<Activity> activities)
+        {
+            foreach (Activity sub in activities)  // ไปวนหาค่าภายใน activity 
+            {
+                Activity newActivity = new Activity           // สร้าง activity ใหม่
+                {
+                    Name = sub.Name,
+                    CreateDate = DateTime.Now,
+                    UpdateDate = DateTime.Now,
+                    IsDelete = false,
+                    Project = project
+                };
+
+                SetActivities(project, newActivity.InverseActivityHeader, sub.InverseActivityHeader);
+
+                mainActivity.Add(newActivity);
             }
         }
 

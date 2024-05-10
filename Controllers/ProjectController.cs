@@ -2,8 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using activityCore.Data;
 using activityCore.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
 
-[Authorize]
+// [Authorize]
 [ApiController]
 [Route("[controller]")]
 [Produces("application/json")]
@@ -27,9 +28,25 @@ public class ProjectController : ControllerBase
         /// <required>true</required>
         public string? Name { get; set; }
 
+        /// <summary>
+        /// Start Date
+        /// </summary>
+        /// <example>2022-01-01</example>
         public DateOnly? StartDate { get; set; }
 
+        /// <summary>
+        /// Update Date
+        /// </summary>
+        /// <example>2022-01-31</example>
         public DateOnly? EndDate { get; set; }
+
+        /// <summary>
+        /// Activities of Project
+        /// </summary>
+        /// <example>["string"]</example>
+        public List<Activity>? Activities { get; set; }
+
+        // public List<Activity>? Activities { get; set; } = new List<Activity>(); // public class ProjectCreate { }
 
     }
 
@@ -42,7 +59,36 @@ public class ProjectController : ControllerBase
     /// {
     ///     "name": "Project123",
     ///     "startDate": "2022-01-01",
-    ///     "endDate": "2022-01-31"
+    ///     "endDate": "2022-01-31",
+    ///     "activities": [
+    ///         {
+    ///             "name": "Act1",
+    ///             "inverseActivityHeader": [
+    ///                 {
+    ///                     "name": "Act1.1",
+    ///                     "inverseActivityHeader": []
+    ///                 }
+    ///             ]
+    ///         },
+    ///         {
+    ///             "name": "Act2",
+    ///             "inverseActivityHeader": [
+    ///                 {
+    ///                     "name": "Act2.1",
+    ///                     "inverseActivityHeader": []
+    ///                 },
+    ///                 {
+    ///                     "name": "Act2.2",
+    ///                     "inverseActivityHeader": [
+    ///                         {
+    ///                             "name": "Act2.2.1",
+    ///                             "inverseActivityHeader": []
+    ///                         }
+    ///                     ]
+    ///                 }
+    ///             ]
+    ///         }
+    ///     ]
     /// }
     /// ```
     /// </remarks>
@@ -82,9 +128,18 @@ public class ProjectController : ControllerBase
     ///     }
     /// ```
     /// </response>
-    /// <response code="500">Internal Server Error</response>
+    /// <response code="500">
+    /// Internal Server Error
+    ///  ```json
+    /// {
+    ///     "Code": 500,
+    ///     "Message": "Internal Server Error : An error occurred while saving the entity changes. See the inner exception for details.",
+    ///     "Data": null
+    /// }
+    /// ```
+    /// </response>
     [HttpPost(Name = "CreateProject")]
-    public ActionResult CreateProject(ProjectCreate projectCreate)
+    public ActionResult<Response> CreateProject(ProjectCreate projectCreate)
     {
         Project project = new Project
         {
@@ -93,13 +148,30 @@ public class ProjectController : ControllerBase
             EndDate = projectCreate.EndDate,
         };
 
-        project = Project.Create(_db, project);
-        return Ok(new Response
+        try
+        {  // Sub logic
+            Activity.SetActivities(project, project.Activities, projectCreate.Activities);
+
+            // หลังจากที่สร้างกิจกรรมทั้งหมดแล้ว จึงทำการเพิ่มโปรเจคลงในฐานข้อมูล แล้วส่งกลับไปยัง Response กลับไปยัง Client
+            Project.Create(_db, project);
+
+            return Ok(new Response
+            {
+                Code = 200,
+                Message = "Success",
+                Data = project
+            });
+
+        }
+        catch (Exception e)
         {
-            Code = 200,
-            Message = "Success",
-            Data = project
-        });
+            return new Response
+            {
+                Code = 500,
+                Message = "Internal Server Error : " + e.Message,
+                Data = null
+            };
+        }
     }
 
     /// <summary>
