@@ -48,7 +48,6 @@ namespace activityCore.Models
             if (project == null)
             {
                 return new Project();
-
             }
 
             // ดึงข้อมูลกิจกรรมสำหรับโปรเจกต์นี้
@@ -65,10 +64,18 @@ namespace activityCore.Models
         {
             project.UpdateDate = DateTime.Now;
 
-            db.Entry(project).State = EntityState.Modified;
-            // db.Projects.Update(project);
+            // db.Entry(project).State = EntityState.Modified; // ไม่อัปเดตตัวลูก
+            db.Projects.Update(project); // อัปเดตตัวลูก
+
+            List<Activity> activities = db.Activities.Where(a => a.ProjectId == project.Id).OrderBy(q => q.Id).ToList(); // ตามลำดับ
+
+            foreach (Activity activity in activities)
+            {
+                Activity.SetActivitiesCreate(activity);
+            }
 
             db.SaveChanges();
+
             return project;
         }
 
@@ -79,7 +86,13 @@ namespace activityCore.Models
             project.IsDelete = true;
             db.Entry(project).State = EntityState.Modified;
 
-            // db.Projects.Remove(project); // ลบในฐานข้อมูล
+            List<Activity> activities = db.Activities.Where(a => a.ProjectId == id).OrderBy(q => q.Id).ToList(); // ตามลำดับ
+
+            foreach (Activity a in activities)
+            {
+                a.IsDelete = true;
+            }
+            // db.Projects.Remove(project); // ลบในฐานข้อมูล 
 
             db.SaveChanges();
 

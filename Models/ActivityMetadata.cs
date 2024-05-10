@@ -34,6 +34,7 @@ namespace activityCore.Models
 
             foreach (Activity subActivity in activity.InverseActivityHeader)
             {
+                subActivity.ProjectId = activity.ProjectId;
                 SetActivitiesCreate(subActivity);
             }
         }

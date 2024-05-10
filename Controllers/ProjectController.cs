@@ -240,10 +240,76 @@ public class ProjectController : ControllerBase
     ///     "name": "Project123",
     ///     "startDate": "2022-01-01",
     ///     "endDate": "2022-01-31",
-    ///     "createDate": "2024-05-07T11:55:57.0455498+07:00",
-    ///     "updateDate": "2024-05-07T11:55:57.0455541+07:00",
+    ///     "createDate": "2024-05-10T12:27:38.437+07:00",
+    ///     "updateDate": "2024-05-10T12:27:38.437+07:00",
     ///     "isDelete": false,
-    ///     "activities": []
+    ///     "activities": [
+    ///          {
+    ///             "id": 1,
+    ///             "projectId": 1,
+    ///             "name": "Act1",
+    ///             "createDate": "2024-05-10T12:27:38.433",
+    ///             "updateDate": "2024-05-10T12:27:38.433",
+    ///             "isDelete": false,
+    ///             "inverseActivityHeader": [
+    ///                 {
+    ///                     "id": 3,
+    ///                     "projectId": 1,
+    ///                     "activityHeaderId": 1,
+    ///                     "name": "Act1.1",
+    ///                     "createDate": "2024-05-10T12:27:38.433",
+    ///                     "updateDate": "2024-05-10T12:27:38.433",
+    ///                     "isDelete": false,
+    ///                     "inverseActivityHeader": []
+    ///                 },
+    ///                 {
+    ///                     "name": "Act1.2",
+    ///                     "inverseActivityHeader": []
+    ///                 }
+    ///             ]
+    ///         },
+    ///         {
+    ///             "id": 2,
+    ///             "projectId": 1,
+    ///             "name": "Act2",
+    ///             "createDate": "2024-05-10T12:27:38.433",
+    ///             "updateDate": "2024-05-10T12:27:38.433",
+    ///             "isDelete": false,
+    ///             "inverseActivityHeader": [
+    ///                 {
+    ///                     "id": 4,
+    ///                     "projectId": 1,
+    ///                     "activityHeaderId": 2,
+    ///                     "name": "Act2.1",
+    ///                     "createDate": "2024-05-10T12:27:38.433",
+    ///                     "updateDate": "2024-05-10T12:27:38.433",
+    ///                     "isDelete": false,
+    ///                     "inverseActivityHeader": []
+    ///                 },
+    ///                 {
+    ///                     "id": 5,
+    ///                     "projectId": 1,
+    ///                     "activityHeaderId": 2,
+    ///                     "name": "Act2.2",
+    ///                     "createDate": "2024-05-10T12:27:38.433",
+    ///                     "updateDate": "2024-05-10T12:27:38.433",
+    ///                     "isDelete": false,
+    ///                     "inverseActivityHeader": [
+    ///                         {
+    ///                             "id": 6,
+    ///                             "projectId": 1,
+    ///                             "activityHeaderId": 5,
+    ///                             "name": "Act2.2.1",
+    ///                             "createDate": "2024-05-10T12:27:38.433",
+    ///                             "updateDate": "2024-05-10T12:27:38.433",
+    ///                             "isDelete": false,
+    ///                             "inverseActivityHeader": []
+    ///                         }
+    ///                     ]
+    ///                 }
+    ///             ]
+    ///         }
+    ///     ]
     /// }
     /// ```
     /// </remarks>
@@ -252,6 +318,7 @@ public class ProjectController : ControllerBase
     public ActionResult UpdateProject(Project project)
     {
         project = Project.Update(_db, project);
+
         return Ok(new Response
         {
             Code = 200,
