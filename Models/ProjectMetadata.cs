@@ -29,6 +29,13 @@ namespace activityCore.Models
         public static List<Project> GetAll(ActivityContext db)
         {
             List<Project> projects = db.Projects.Where(e => e.IsDelete != true).ToList();
+
+            foreach (Project p in projects)
+            {
+                List<Activity> activities = db.Activities.Where(q => q.IsDelete != true).ToList();
+                p.Activities = activities;
+            }
+
             return projects;
         }
 
