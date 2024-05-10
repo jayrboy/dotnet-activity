@@ -43,7 +43,21 @@ namespace activityCore.Models
         public static Project GetById(ActivityContext db, int id)
         {
             Project? project = db.Projects.Where(q => q.Id == id && q.IsDelete != true).FirstOrDefault();
-            return project ?? new Project();
+
+            // หากไม่พบโปรเจกต์ก็คืนค่าอ็อบเจกต์ Project ว่างเปล่า
+            if (project == null)
+            {
+                return new Project();
+
+            }
+
+            // ดึงข้อมูลกิจกรรมสำหรับโปรเจกต์นี้
+            List<Activity> activities = db.Activities.Where(a => a.ProjectId == id).OrderBy(q => q.Id).ToList(); // ตามลำดับ
+
+            // เก็บข้อมูลกิจกรรมลงในโปรเจกต์
+            project.Activities = activities;
+
+            return project;
         }
 
         //  Update

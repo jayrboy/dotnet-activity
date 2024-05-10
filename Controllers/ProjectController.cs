@@ -220,6 +220,7 @@ public class ProjectController : ControllerBase
     public ActionResult GetProjectById(int id)
     {
         Project project = Project.GetById(_db, id);
+
         return Ok(new Response
         {
             Code = 200,
