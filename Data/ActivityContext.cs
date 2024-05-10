@@ -41,6 +41,8 @@ public partial class ActivityContext : DbContext
 
             entity.ToTable("Account");
 
+            entity.HasIndex(e => e.Username, "Unique_Username").IsUnique();
+
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.CreateDate).HasColumnType("datetime");
             entity.Property(e => e.IsDelete).HasColumnName("isDelete");

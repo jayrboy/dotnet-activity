@@ -49,21 +49,34 @@ public class AccountController : ControllerBase
     [HttpPost(Name = "CreateUser")]
     public ActionResult CreateUser(AccountCreate AccountCreate)
     {
-        Account user = new Account
+        try
         {
-            Username = AccountCreate.Username,
-            Password = AccountCreate.Password,
-            Role = AccountCreate.Role,
-        };
+            Account user = new Account
+            {
+                Username = AccountCreate.Username,
+                Password = AccountCreate.Password,
+                Role = AccountCreate.Role,
+            };
 
-        user = Account.Create(_db, user);
+            user = Account.Create(_db, user);
 
-        return Ok(new Response
+            return Ok(new Response
+            {
+                Code = 200,
+                Message = "Success",
+                Data = user
+            });
+        }
+        catch
         {
-            Code = 200,
-            Message = "Success",
-            Data = user
-        });
+            // Handle unique constraint violation (duplicate username)
+            return StatusCode(409, new Response
+            {
+                Code = 409,
+                Message = "Username is Not Found",
+                Data = null
+            });
+        }
     }
 
     /// <summary>

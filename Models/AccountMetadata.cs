@@ -15,7 +15,7 @@ namespace activityCore.Models
         // Create Action
         public static Account Create(ActivityContext db, Account user)
         {
-            user.Role = "user";
+            user.Role = user.Role;
             user.CreateDate = DateTime.Now;
             user.UpdateDate = DateTime.Now;
             user.IsDelete = false;
@@ -60,7 +60,7 @@ namespace activityCore.Models
             return user;
         }
 
-        
+
     }
 
 
