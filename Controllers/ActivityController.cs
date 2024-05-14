@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using activityCore.Data;
 using activityCore.Models;
+using Microsoft.AspNetCore.Authorization;
 
-
+// [Authorize]
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 [Produces("application/json")]
 public class ActivityController : ControllerBase
 {
@@ -283,9 +284,25 @@ public class ActivityController : ControllerBase
     [HttpDelete("{id}", Name = "DeleteActivityById")]
     public ActionResult DeleteActivityById(int id)
     {
-        Activity activity = Activity.Delete(_db, id);
-
-        return Ok(activity);
+        try
+        {
+            Activity activity = Activity.Delete(_db, id);
+        }
+        catch
+        {
+            return NotFound(new Response
+            {
+                Code = 404,
+                Message = "User not found",
+                Data = null
+            });
+        }
+        return Ok(new Response
+        {
+            Code = 200,
+            Message = "Success",
+            Data = null
+        });
     }
 
 }

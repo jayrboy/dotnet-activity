@@ -5,10 +5,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace activityCore.Models
 {
-    public class ActivityMetadata
-    {
-
-    }
+    public class ActivityMetadata { }
 
     [MetadataType(typeof(ActivityMetadata))]
     public partial class Activity

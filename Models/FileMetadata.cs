@@ -3,10 +3,7 @@ using activityCore.Data;
 
 namespace activityCore.Models
 {
-    public class FileMetadata
-    {
-
-    }
+    public class FileMetadata { }
 
     [MetadataType(typeof(FileMetadata))]
     public partial class File

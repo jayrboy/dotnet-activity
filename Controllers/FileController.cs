@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using activityCore.Data;
 using activityCore.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace activityCore.Controllers;
 
+[Authorize]
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class FileController : ControllerBase
 {
     private ActivityContext _db = new ActivityContext();

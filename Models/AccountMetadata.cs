@@ -4,10 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace activityCore.Models
 {
-    public class AccountMetadata
-    {
-
-    }
+    public class AccountMetadata { }
 
     [MetadataType(typeof(AccountMetadata))]
     public partial class Account

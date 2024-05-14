@@ -3,10 +3,11 @@ using activityCore.Data;
 using activityCore.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using System.ComponentModel.DataAnnotations;
 
-// [Authorize]
+// [Authorize(Roles = "admin, user")]
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 [Produces("application/json")]
 public class ProjectController : ControllerBase
 {
@@ -26,6 +27,7 @@ public class ProjectController : ControllerBase
         /// </summary>
         /// <example>Project123</example>
         /// <required>true</required>
+        [Required]
         public string? Name { get; set; }
 
         /// <summary>
@@ -45,100 +47,78 @@ public class ProjectController : ControllerBase
         /// </summary>
         /// <example>["string"]</example>
         public List<Activity>? Activities { get; set; }
-
-        // public List<Activity>? Activities { get; set; } = new List<Activity>(); // public class ProjectCreate { }
-
     }
 
     /// <summary>
     /// Create Project
     /// </summary>
+    /// <param name="project"></param>
+    /// <returns>A newly created Project</returns>
     /// <remarks>
     /// Sample request:
-    /// ```json
-    /// {
-    ///     "name": "Project123",
-    ///     "startDate": "2022-01-01",
-    ///     "endDate": "2022-01-31",
-    ///     "activities": [
-    ///         {
-    ///             "name": "Act1",
-    ///             "inverseActivityHeader": [
-    ///                 {
-    ///                     "name": "Act1.1",
-    ///                     "inverseActivityHeader": []
-    ///                 }
-    ///             ]
-    ///         },
-    ///         {
-    ///             "name": "Act2",
-    ///             "inverseActivityHeader": [
-    ///                 {
-    ///                     "name": "Act2.1",
-    ///                     "inverseActivityHeader": []
-    ///                 },
-    ///                 {
-    ///                     "name": "Act2.2",
-    ///                     "inverseActivityHeader": [
-    ///                         {
-    ///                             "name": "Act2.2.1",
-    ///                             "inverseActivityHeader": []
-    ///                         }
-    ///                     ]
-    ///                 }
-    ///             ]
-    ///         }
-    ///     ]
-    /// }
-    /// ```
-    /// </remarks>
-    /// <returns></returns>
-    /// <response code="200">
-    /// Success
-    ///  ```json
-    /// {
-    ///     "Code": 200,
-    ///     "Message": "Success",
-    ///     "Data": {
-    ///         "id": 1,
+    /// 
+    ///     POST /Project
+    ///     {
     ///         "name": "Project123",
     ///         "startDate": "2022-01-01",
     ///         "endDate": "2022-01-31",
-    ///         "createDate": "2024-05-07T11:55:57.0455498+07:00",
-    ///         "updateDate": "2024-05-07T11:55:57.0455541+07:00",
-    ///         "isDelete": false,
-    ///         "activities": []
-    ///     }
-    /// }
-    /// ```
-    /// </response>
-    /// <response code="400">
-    /// Bad Request
-    ///  ```json
-    /// {
-    ///     "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-    ///     "title": "One or more validation errors occurred.",
-    ///     "status": 400,
-    ///     "errors": {
-    ///     "$.startDate": [
-    ///         "The JSON value could not be converted to System.Nullable`1[System.DateOnly]. Path: $.startDate | LineNumber: 2 | BytePositionInLine: 16."
+    ///         "activities": [
+    ///             {
+    ///                 "name": "Act1",
+    ///                 "inverseActivityHeader": [
+    ///                     {
+    ///                         "name": "Act1.1",
+    ///                         "inverseActivityHeader": []
+    ///                     }
+    ///                 ]
+    ///             },
+    ///             {
+    ///                 "name": "Act2",
+    ///                 "inverseActivityHeader": [
+    ///                     {
+    ///                         "name": "Act2.1",
+    ///                         "inverseActivityHeader": []
+    ///                     },
+    ///                     {
+    ///                         "name": "Act2.2",
+    ///                         "inverseActivityHeader": [
+    ///                             {
+    ///                                 "name": "Act2.2.1",
+    ///                                 "inverseActivityHeader": []
+    ///                             }
+    ///                         ]
+    ///                     }
+    ///                 ]
+    ///             }
     ///         ]
-    ///     },
-    ///     "traceId": "00-b5c199ff556b804f91d212f9d2c16a07-68ca9d9ef8b71531-00"
     ///     }
-    /// ```
+    /// 
+    /// </remarks>
+    /// <response code="201">
+    /// Returns the newly created project
+    /// 
+    ///     {
+    ///         "Code": 201,
+    ///         "Message": "Returns the newly created project",
+    ///         "Data": {
+    ///             "id": 1,
+    ///             "name": "Project123",
+    ///             "startDate": "2022-01-01",
+    ///             "endDate": "2022-01-31",
+    ///             "createDate": "2024-05-07T11:55:57.0455498+07:00",
+    ///             "updateDate": "2024-05-07T11:55:57.0455541+07:00",
+    ///             "isDelete": false,
+    ///             "activities": []
+    ///         }
+    ///     }
+    /// 
     /// </response>
-    /// <response code="500">
-    /// Internal Server Error
-    ///  ```json
-    /// {
-    ///     "Code": 500,
-    ///     "Message": "Internal Server Error : An error occurred while saving the entity changes. See the inner exception for details.",
-    ///     "Data": null
-    /// }
-    /// ```
-    /// </response>
+    /// <response code="400">If the project is null</response>
+    /// <response code="401">Unauthorized</response>
     [HttpPost(Name = "CreateProject")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public ActionResult<Response> CreateProject(ProjectCreate projectCreate)
     {
         Project project = new Project
@@ -165,19 +145,24 @@ public class ProjectController : ControllerBase
         }
         catch (Exception e)
         {
-            return new Response
+            return StatusCode(500, new Response
             {
                 Code = 500,
-                Message = "Internal Server Error : " + e.Message,
+                Message = e.Message,
                 Data = null
-            };
+            });
         }
     }
 
     /// <summary>
     /// Get All
     /// </summary>
+    /// <returns>All Projects</returns>
+    /// <response code="200">Success</response>
+    /// <response code="401">Unauthorized</response>
     [HttpGet(Name = "GetAll")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public ActionResult GetAllProduct()
     {
         List<Project> projects = Project.GetAll(_db).OrderBy(q => q.Id).ToList(); // ตามลำดับ
@@ -194,34 +179,46 @@ public class ProjectController : ControllerBase
     /// Get ID
     /// </summary>
     /// <param name="id"></param>
-    /// <returns></returns>
+    /// <returns>Project By ID</returns>
     /// <response code="200">
     /// Success
-    ///  ```json
-    /// {
-    ///     "Code": 200,
-    ///     "Message": "Success",
-    ///     "Data": {
-    ///         "id": 1,
-    ///         "name": "Project123",
-    ///         "startDate": "2022-01-01",
-    ///         "endDate": "2022-01-31",
-    ///         "createDate": "2024-05-07T11:55:57.0455498+07:00",
-    ///         "updateDate": "2024-05-07T11:55:57.0455541+07:00",
-    ///         "isDelete": false,
-    ///         "activities": []
+    /// 
+    ///     {
+    ///         "Code": 200,
+    ///         "Message": "Success",
+    ///         "Data": {
+    ///             "id": 1,
+    ///             "name": "Project123",
+    ///             "startDate": "2022-01-01",
+    ///             "endDate": "2022-01-31",
+    ///             "createDate": "2024-05-07T11:55:57.0455498+07:00",
+    ///             "updateDate": "2024-05-07T11:55:57.0455541+07:00",
+    ///             "isDelete": false,
+    ///             "activities": []
+    ///         }
     ///     }
-    /// }
-    /// ```
+    ///     
     /// </response>
     /// <response code="400">Bad Request</response>
+    /// <response code="401">Unauthorized</response>
     /// <response code="500">Internal Server Error</response>
     [HttpGet("{id}", Name = "GetProjectById")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public ActionResult GetProjectById(int id)
     {
         Project project = Project.GetById(_db, id);
 
-        return Ok(new Response
+        return project == null
+        ? NotFound(new Response
+        {
+            Code = 404,
+            Message = "Not Found",
+            Data = project
+        })
+        : Ok(new Response
         {
             Code = 200,
             Message = "Success",
@@ -232,92 +229,124 @@ public class ProjectController : ControllerBase
     /// <summary>
     /// Update
     /// </summary>
+    /// <param name="project"></param>
+    /// <returns>A newly updated Project</returns>
     /// <remarks>
     /// Sample request:
-    /// ```json
-    /// {
-    ///     "id": 1,
-    ///     "name": "Project123",
-    ///     "startDate": "2022-01-01",
-    ///     "endDate": "2022-01-31",
-    ///     "createDate": "2024-05-10T12:27:38.437+07:00",
-    ///     "updateDate": "2024-05-10T12:27:38.437+07:00",
-    ///     "isDelete": false,
-    ///     "activities": [
-    ///          {
-    ///             "id": 1,
-    ///             "projectId": 1,
-    ///             "name": "Act1",
-    ///             "createDate": "2024-05-10T12:27:38.433",
-    ///             "updateDate": "2024-05-10T12:27:38.433",
-    ///             "isDelete": false,
-    ///             "inverseActivityHeader": [
-    ///                 {
-    ///                     "id": 3,
-    ///                     "projectId": 1,
-    ///                     "activityHeaderId": 1,
-    ///                     "name": "Act1.1",
-    ///                     "createDate": "2024-05-10T12:27:38.433",
-    ///                     "updateDate": "2024-05-10T12:27:38.433",
-    ///                     "isDelete": false,
-    ///                     "inverseActivityHeader": []
-    ///                 },
-    ///                 {
-    ///                     "name": "Act1.2",
-    ///                     "inverseActivityHeader": []
-    ///                 }
-    ///             ]
-    ///         },
-    ///         {
-    ///             "id": 2,
-    ///             "projectId": 1,
-    ///             "name": "Act2",
-    ///             "createDate": "2024-05-10T12:27:38.433",
-    ///             "updateDate": "2024-05-10T12:27:38.433",
-    ///             "isDelete": false,
-    ///             "inverseActivityHeader": [
-    ///                 {
-    ///                     "id": 4,
-    ///                     "projectId": 1,
-    ///                     "activityHeaderId": 2,
-    ///                     "name": "Act2.1",
-    ///                     "createDate": "2024-05-10T12:27:38.433",
-    ///                     "updateDate": "2024-05-10T12:27:38.433",
-    ///                     "isDelete": false,
-    ///                     "inverseActivityHeader": []
-    ///                 },
-    ///                 {
-    ///                     "id": 5,
-    ///                     "projectId": 1,
-    ///                     "activityHeaderId": 2,
-    ///                     "name": "Act2.2",
-    ///                     "createDate": "2024-05-10T12:27:38.433",
-    ///                     "updateDate": "2024-05-10T12:27:38.433",
-    ///                     "isDelete": false,
-    ///                     "inverseActivityHeader": [
-    ///                         {
-    ///                             "id": 6,
-    ///                             "projectId": 1,
-    ///                             "activityHeaderId": 5,
-    ///                             "name": "Act2.2.1",
-    ///                             "createDate": "2024-05-10T12:27:38.433",
-    ///                             "updateDate": "2024-05-10T12:27:38.433",
-    ///                             "isDelete": false,
-    ///                             "inverseActivityHeader": []
-    ///                         }
-    ///                     ]
-    ///                 }
-    ///             ]
-    ///         }
-    ///     ]
-    /// }
-    /// ```
+    ///     
+    ///     PUT /Project
+    ///     {
+    ///         "id": 1,
+    ///         "name": "Project123",
+    ///         "startDate": "2022-01-01",
+    ///         "endDate": "2022-01-31",
+    ///         "createDate": "2024-05-10T12:27:38.437+07:00",
+    ///         "updateDate": "2024-05-10T12:27:38.437+07:00",
+    ///         "isDelete": false,
+    ///         "activities": [
+    ///             {
+    ///                 "id": 1,
+    ///                 "projectId": 1,
+    ///                 "name": "Act1",
+    ///                 "createDate": "2024-05-10T12:27:38.433",
+    ///                 "updateDate": "2024-05-10T12:27:38.433",
+    ///                 "isDelete": false,
+    ///                 "inverseActivityHeader": [
+    ///                     {
+    ///                         "id": 3,
+    ///                         "projectId": 1,
+    ///                         "activityHeaderId": 1,
+    ///                         "name": "Act1.1",
+    ///                         "createDate": "2024-05-10T12:27:38.433",
+    ///                         "updateDate": "2024-05-10T12:27:38.433",
+    ///                         "isDelete": false,
+    ///                         "inverseActivityHeader": []
+    ///                     },
+    ///                     {
+    ///                         "name": "Act1.2",
+    ///                         "inverseActivityHeader": []
+    ///                     }
+    ///                 ]
+    ///             },
+    ///             {
+    ///                 "id": 2,
+    ///                 "projectId": 1,
+    ///                 "name": "Act2",
+    ///                 "createDate": "2024-05-10T12:27:38.433",
+    ///                 "updateDate": "2024-05-10T12:27:38.433",
+    ///                 "isDelete": false,
+    ///                 "inverseActivityHeader": [
+    ///                     {
+    ///                         "id": 4,
+    ///                         "projectId": 1,
+    ///                         "activityHeaderId": 2,
+    ///                         "name": "Act2.1",
+    ///                         "createDate": "2024-05-10T12:27:38.433",
+    ///                         "updateDate": "2024-05-10T12:27:38.433",
+    ///                         "isDelete": false,
+    ///                         "inverseActivityHeader": []
+    ///                     },
+    ///                     {
+    ///                         "id": 5,
+    ///                         "projectId": 1,
+    ///                         "activityHeaderId": 2,
+    ///                         "name": "Act2.2",
+    ///                         "createDate": "2024-05-10T12:27:38.433",
+    ///                         "updateDate": "2024-05-10T12:27:38.433",
+    ///                         "isDelete": false,
+    ///                         "inverseActivityHeader": [
+    ///                             {
+    ///                                 "id": 6,
+    ///                                 "projectId": 1,
+    ///                                 "activityHeaderId": 5,
+    ///                                 "name": "Act2.2.1",
+    ///                                 "createDate": "2024-05-10T12:27:38.433",
+    ///                                 "updateDate": "2024-05-10T12:27:38.433",
+    ///                                 "isDelete": false,
+    ///                                 "inverseActivityHeader": []
+    ///                             }
+    ///                         ]
+    ///                     }
+    ///                 ]
+    ///             }
+    ///         ]
+    ///     }
+    ///     
     /// </remarks>
-    /// <returns></returns>
+    /// <response code="200">Success</response>
+    /// <response code="400">Bad Request</response>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="500">Internal Server Error</response>
     [HttpPut(Name = "UpdateProject")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public ActionResult UpdateProject(Project project)
     {
-        project = Project.Update(_db, project);
+        if (project == null)
+        {
+            return BadRequest(new Response
+            {
+                Code = 400,
+                Message = "Project not found",
+                Data = null
+            });
+        }
+        try
+        {
+            project = Project.Update(_db, project);
+
+        }
+        catch (Exception e)
+        {
+            return StatusCode(500, new Response
+            {
+                Code = 500,
+                Message = e.Message,
+                Data = null
+            });
+        }
 
         return Ok(new Response
         {
@@ -331,38 +360,58 @@ public class ProjectController : ControllerBase
     /// Delete ID
     /// </summary>
     /// <param name="id"></param>
-    /// <returns></returns>
+    /// <returns>Product</returns>
     /// <response code="200">
     /// Success
     ///  ```json
-    /// {
-    ///     "Code": 200,
-    ///     "Message": "Success",
-    ///     "Data": {
-    ///         "id": 1,
-    ///         "name": "Project123",
-    ///         "startDate": "2022-01-01",
-    ///         "endDate": "2022-01-31",
-    ///         "createDate": "2024-05-07T11:55:57.0455498+07:00",
-    ///         "updateDate": "2024-05-07T11:55:57.0455541+07:00",
-    ///         "isDelete": true,
-    ///         "activities": []
+    ///  
+    ///     {
+    ///         "Code": 200,
+    ///         "Message": "Success",
+    ///         "Data": {
+    ///             "id": 1,
+    ///             "name": "Project123",
+    ///             "startDate": "2022-01-01",
+    ///             "endDate": "2022-01-31",
+    ///             "createDate": "2024-05-07T11:55:57.0455498+07:00",
+    ///             "updateDate": "2024-05-07T11:55:57.0455541+07:00",
+    ///             "isDelete": true,
+    ///             "activities": []
+    ///         }
     ///     }
-    /// }
-    /// ```
+    /// 
     /// </response>
     /// <response code="400">Bad Request</response>
+    /// <response code="401">Unauthorized</response>
     /// <response code="500">Internal Server Error</response>
     [HttpDelete("{id}", Name = "DeleteProjectById")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public ActionResult DeleteProjectById(int id)
     {
-        Project project = Project.Delete(_db, id);
-        return Ok(new Response
+        try
         {
-            Code = 200,
-            Message = "Success",
-            Data = project
-        });
+            Project project = Project.Delete(_db, id);
+
+            return Ok(new Response
+            {
+                Code = 200,
+                Message = "Success",
+                Data = project
+            });
+        }
+        catch
+        {
+            // ถ้าไม่พบข้อมูล user ตาม id ที่ระบุ
+            return NotFound(new Response
+            {
+                Code = 404,
+                Message = "User not found",
+                Data = null
+            });
+        }
     }
 
 }

@@ -3,12 +3,11 @@ using activityCore.Data;
 using activityCore.Models;
 using Microsoft.AspNetCore.Authorization;
 
-[Authorize]
+[Authorize(Roles = "admin, dev")]
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 [Produces("application/json")]
 public class AccountController : ControllerBase
-
 {
     private ActivityContext _db = new ActivityContext();
 
@@ -49,23 +48,15 @@ public class AccountController : ControllerBase
     [HttpPost(Name = "CreateUser")]
     public ActionResult CreateUser(AccountCreate AccountCreate)
     {
+        Account user = new Account
+        {
+            Username = AccountCreate.Username,
+            Password = AccountCreate.Password,
+            Role = AccountCreate.Role,
+        };
         try
         {
-            Account user = new Account
-            {
-                Username = AccountCreate.Username,
-                Password = AccountCreate.Password,
-                Role = AccountCreate.Role,
-            };
-
             user = Account.Create(_db, user);
-
-            return Ok(new Response
-            {
-                Code = 200,
-                Message = "Success",
-                Data = user
-            });
         }
         catch
         {
@@ -73,10 +64,16 @@ public class AccountController : ControllerBase
             return StatusCode(409, new Response
             {
                 Code = 409,
-                Message = "Username is Not Found",
+                Message = "Username already exists",
                 Data = null
             });
         }
+        return Ok(new Response
+        {
+            Code = 200,
+            Message = "Success",
+            Data = user
+        });
     }
 
     /// <summary>
@@ -144,12 +141,27 @@ public class AccountController : ControllerBase
     [HttpDelete("{id}", Name = "DeleteUserById")]
     public ActionResult DeleteUserById(int id)
     {
-        Account user = Account.Delete(_db, id);
-        return Ok(new Response
+        try
         {
-            Code = 200,
-            Message = "Success",
-            Data = user
-        });
+            Account user = Account.Delete(_db, id);
+            return Ok(new Response
+            {
+                Code = 200,
+                Message = "Success",
+                Data = user
+            });
+        }
+        catch
+        {
+            // ถ้าไม่พบข้อมูล user ตาม id ที่ระบุ
+            return NotFound(new Response
+            {
+                Code = 404,
+                Message = "User not found",
+                Data = null
+            });
+        }
+
+
     }
 }

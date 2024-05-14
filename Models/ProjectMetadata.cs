@@ -5,10 +5,7 @@ using System.Net.Http.Headers;
 
 namespace activityCore.Models
 {
-    public class ProjectMetadata
-    {
-
-    }
+    public class ProjectMetadata { }
 
     [MetadataType(typeof(ProjectMetadata))]
     public partial class Project
