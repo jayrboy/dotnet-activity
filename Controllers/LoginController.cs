@@ -11,11 +11,11 @@ using System.ComponentModel.DataAnnotations;
 [Route("api/[controller]")]
 [Produces("application/json")]
 public class LoginController : ControllerBase
-
 {
     private const string TokenSecret = "YourSecretKeyForAuthenticationOfApplicationDeveloper";
 
-    private static readonly TimeSpan TokenLifetime = TimeSpan.FromMinutes(1); // 1 Hour
+    private static readonly TimeSpan TokenLifetime = TimeSpan.FromMinutes(10);
+
     private ActivityContext _db = new ActivityContext();
 
     private readonly ILogger<LoginController> _logger;

@@ -20,8 +20,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AngularApp", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "https://www.somehost.com")
-              .WithHeaders(HeaderNames.ContentType, "application/json")
+        policy.WithOrigins("http://localhost:4200", "https://www.example.com")
+              .WithHeaders("Content-Type")
               .WithMethods("POST", "GET", "PUT", "DELETE");
     });
 });
@@ -85,7 +85,7 @@ builder.Services.AddAuthentication(options =>
     {
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"])),
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
@@ -105,11 +105,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication();
-app.UseAuthorization();
-
 //TODO: Enable CORS middleware
 app.UseCors("AngularApp");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
