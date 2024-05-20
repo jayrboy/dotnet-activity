@@ -19,7 +19,7 @@ public partial class Project
 
     public bool? IsDelete { get; set; }
 
-    public virtual ICollection<Activity> Activities { get; set; } = new List<Activity>();
+    public virtual ICollection<Activity>? Activities { get; set; } = new List<Activity>();
 
-    public virtual ICollection<FileXproject> FileXprojects { get; set; } = new List<FileXproject>();
+    public virtual ICollection<FileXproject>? FileXprojects { get; set; } = new List<FileXproject>();
 }

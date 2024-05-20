@@ -134,14 +134,6 @@ public class ProjectController : ControllerBase
 
             // หลังจากที่สร้างกิจกรรมทั้งหมดแล้ว จึงทำการเพิ่มโปรเจคลงในฐานข้อมูล แล้วส่งกลับไปยัง Response กลับไปยัง Client
             Project.Create(_db, project);
-
-            return Ok(new Response
-            {
-                Code = 200,
-                Message = "Success",
-                Data = project
-            });
-
         }
         catch (Exception e)
         {
@@ -152,6 +144,12 @@ public class ProjectController : ControllerBase
                 Data = null
             });
         }
+        return Ok(new Response
+        {
+            Code = 200,
+            Message = "Success",
+            Data = project
+        });
     }
 
     /// <summary>
