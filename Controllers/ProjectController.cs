@@ -322,26 +322,16 @@ public class ProjectController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public ActionResult UpdateProject(Project project)
     {
-        if (project == null)
-        {
-            return BadRequest(new Response
-            {
-                Code = 400,
-                Message = "Project not found",
-                Data = null
-            });
-        }
         try
         {
             project = Project.Update(_db, project);
-
         }
         catch (Exception e)
         {
             return StatusCode(500, new Response
             {
                 Code = 500,
-                Message = e.Message,
+                Message = "Internal Server Error: " + e.Message,
                 Data = null
             });
         }

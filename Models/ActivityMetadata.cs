@@ -37,22 +37,53 @@ namespace activityCore.Models
         }
 
         // Set Activities
-        public static void SetActivities(Project project, ICollection<Activity> mainActivity, ICollection<Activity> activities)
+        public static void SetActivities(Project project, ICollection<Activity> oldActivities, ICollection<Activity> newActivities)
         {
-            foreach (Activity sub in activities)  // ไปวนหาค่าภายใน activity 
+            foreach (Activity sub in newActivities)  // ไปวนหาค่าภายใน activity 
             {
-                Activity newActivity = new Activity           // สร้าง activity ใหม่
+                Activity newActivity = new Activity  // สร้าง activity ใหม่
                 {
                     Name = sub.Name,
                     CreateDate = DateTime.Now,
                     UpdateDate = DateTime.Now,
                     IsDelete = false,
-                    Project = project
+                    ProjectId = project.Id
                 };
-
                 SetActivities(project, newActivity.InverseActivityHeader, sub.InverseActivityHeader);
+                oldActivities.Add(newActivity);
+            }
+        }
 
-                mainActivity.Add(newActivity);
+        //TODO: Update Activities
+        public static void UpdateActivities(Project project, ICollection<Activity> oldActivities, ICollection<Activity> newActivities)
+        {
+            foreach (Activity newActivity in newActivities)
+            {
+                Activity existingActivity = oldActivities.FirstOrDefault(a => a.Id == newActivity.Id);
+
+                if (existingActivity != null)
+                {
+                    // อัปเดตข้อมูลของ activity ที่มีอยู่
+                    existingActivity.Name = newActivity.Name;
+                    existingActivity.UpdateDate = DateTime.Now;
+
+                    UpdateActivities(project, existingActivity.InverseActivityHeader, newActivity.InverseActivityHeader);
+                }
+                else
+                {
+                    // เพิ่ม activity ใหม่
+                    Activity newAct = new Activity
+                    {
+                        Name = newActivity.Name,
+                        CreateDate = DateTime.Now,
+                        UpdateDate = DateTime.Now,
+                        IsDelete = newActivity.IsDelete,
+                        ProjectId = project.Id
+                    };
+
+                    UpdateActivities(project, newAct.InverseActivityHeader, newActivity.InverseActivityHeader);
+                    oldActivities.Add(newAct);
+                }
             }
         }
 

@@ -1,7 +1,7 @@
 using activityCore.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Headers;
 
 namespace activityCore.Models
 {
@@ -48,32 +48,42 @@ namespace activityCore.Models
             }
 
             // ดึงข้อมูลกิจกรรมสำหรับโปรเจกต์นี้
-            List<Activity> activities = db.Activities.Where(a => a.ProjectId == id).OrderBy(q => q.Id).ToList(); // ตามลำดับ
+            List<Activity> activities = db.Activities.Where(a => a.ProjectId == id && a.ActivityHeaderId == null && a.IsDelete != true)
+            .Include(a => a.ActivityHeader)
+                .ThenInclude(a => a.InverseActivityHeader)
+                    .ThenInclude(a => a.InverseActivityHeader)
+            .Include(a => a.ActivityHeader)
+                .ThenInclude(a => a.ActivityHeader)
+                    .ThenInclude(a => a.InverseActivityHeader)
+            .Include(a => a.InverseActivityHeader)
+                    .ThenInclude(a => a.InverseActivityHeader)
+            .OrderBy(q => q.Id).ToList(); // ตามลำดับ
 
             // เก็บข้อมูลกิจกรรมลงในโปรเจกต์
             project.Activities = activities;
 
-            return project;
+            return project ?? new Project();
         }
 
         //  Update
         public static Project Update(ActivityContext db, Project project)
         {
-            project.UpdateDate = DateTime.Now;
+            Project oldProject = db.Projects.Include(p => p.Activities)
+                                                .ThenInclude(a => a.InverseActivityHeader)
+                                            .FirstOrDefault(p => p.Id == project.Id);
 
-            // db.Entry(project).State = EntityState.Modified; // ไม่อัปเดตตัวลูก
-            db.Projects.Update(project); // อัปเดตตัวลูก
+            // อัปเดตข้อมูลโปรเจกต์
+            oldProject.Name = project.Name;
+            oldProject.StartDate = project.StartDate;
+            oldProject.EndDate = project.EndDate;
+            oldProject.CreateDate = project.CreateDate;
+            oldProject.UpdateDate = DateTime.Now;
+            oldProject.IsDelete = project.IsDelete;
 
-            List<Activity> activities = db.Activities.Where(a => a.ProjectId == project.Id).OrderBy(q => q.Id).ToList(); // ตามลำดับ
-
-            foreach (Activity activity in activities)
-            {
-                Activity.SetActivitiesCreate(activity);
-            }
-
+            Activity.UpdateActivities(project, oldProject.Activities, project.Activities);
             db.SaveChanges();
 
-            return project;
+            return oldProject;
         }
 
         //  Delete ID
@@ -89,7 +99,7 @@ namespace activityCore.Models
             {
                 a.IsDelete = true;
             }
-            // db.Projects.Remove(project); // ลบในฐานข้อมูล 
+            // db.Projects.Remove(project); // ลบหายทันที 
 
             db.SaveChanges();
 
