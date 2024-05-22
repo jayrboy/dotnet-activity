@@ -78,8 +78,8 @@ namespace activityCore.Models
                         Name = newActivity.Name,
                         CreateDate = DateTime.Now,
                         UpdateDate = DateTime.Now,
-                        IsDelete = newActivity.IsDelete,
-                        ProjectId = project.Id
+                        IsDelete = false,
+                        ProjectId = project.Id,
                     };
 
                     // อัปเดตข้อมูลลูกของ activity ที่สร้างใหม่

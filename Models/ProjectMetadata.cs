@@ -1,6 +1,5 @@
 using activityCore.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using System.ComponentModel.DataAnnotations;
 
 namespace activityCore.Models
@@ -64,6 +63,7 @@ namespace activityCore.Models
             oldProject.UpdateDate = DateTime.Now;
             oldProject.IsDelete = project.IsDelete;
 
+            // อัปเดตกิจกรรม
             Activity.SetActivitiesUpdate(project, oldProject.Activities, project.Activities);
             db.SaveChanges();
 
