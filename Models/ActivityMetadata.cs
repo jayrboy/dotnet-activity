@@ -7,10 +7,10 @@ namespace activityCore.Models
 {
     public class ActivityMetadata { }
 
+    //TODO: Actions of Project
     [MetadataType(typeof(ActivityMetadata))]
     public partial class Activity
     {
-        //Create Action
         public static Activity Create(ActivityContext db, Activity activity)
         {
             activity.CreateDate = DateTime.Now;
@@ -22,8 +22,8 @@ namespace activityCore.Models
             return activity;
         }
 
-        // Action SetActivitiesCreate สำหรับวนใส่ค่า CreateDate, UpdateDate, IsDelete ให้กับตัวลูก
-        public static void SetActivitiesCreate(Activity activity)
+        //TODO: สำหรับวนใส่ค่าให้กับตัวลูก. Method นี้เรียกใช้เมื่อสร้างกิจกรรมหลัก และ กิจกรรมย่อย
+        public static void SetActivities(Activity activity)
         {
             activity.CreateDate = DateTime.Now;
             activity.UpdateDate = DateTime.Now;
@@ -32,30 +32,30 @@ namespace activityCore.Models
             foreach (Activity subActivity in activity.InverseActivityHeader)
             {
                 subActivity.ProjectId = activity.ProjectId;
-                SetActivitiesCreate(subActivity);
+                SetActivities(subActivity);
             }
         }
 
-        // Set Activities
-        public static void SetActivities(Project project, ICollection<Activity> oldActivities, ICollection<Activity> newActivities)
+        //TODO: สำหรับวนใส่ค่าให้กับตัวลูก. Method นี้เรียกใช้เมื่อสร้าง Project และ กิจกรรมต่างๆ
+        public static void SetActivitiesCreate(Project project, ICollection<Activity> oldActivities, ICollection<Activity> newActivities)
         {
-            foreach (Activity sub in newActivities)  // ไปวนหาค่าภายใน activity 
+            foreach (Activity subActivity in newActivities)  // ไปวนหาค่าภายใน activity 
             {
                 Activity newActivity = new Activity  // สร้าง activity ใหม่
                 {
-                    Name = sub.Name,
+                    Name = subActivity.Name,
                     CreateDate = DateTime.Now,
                     UpdateDate = DateTime.Now,
                     IsDelete = false,
-                    ProjectId = project.Id
+                    Project = project,
                 };
-                SetActivities(project, newActivity.InverseActivityHeader, sub.InverseActivityHeader);
+                SetActivitiesCreate(project, newActivity.InverseActivityHeader, subActivity.InverseActivityHeader);
                 oldActivities.Add(newActivity);
             }
         }
 
-        //TODO: Update Activities
-        public static void UpdateActivities(Project project, ICollection<Activity> oldActivities, ICollection<Activity> newActivities)
+        //TODO: Update Project & Activities
+        public static void SetActivitiesUpdate(Project project, ICollection<Activity> oldActivities, ICollection<Activity> newActivities)
         {
             foreach (Activity newActivity in newActivities)
             {
@@ -63,15 +63,16 @@ namespace activityCore.Models
 
                 if (existingActivity != null)
                 {
-                    // อัปเดตข้อมูลของ activity ที่มีอยู่
+                    // ถ้ามีข้อมูลเก่า ก็อัปเดตข้อมูลของ activity ที่มีอยู่
                     existingActivity.Name = newActivity.Name;
                     existingActivity.UpdateDate = DateTime.Now;
 
-                    UpdateActivities(project, existingActivity.InverseActivityHeader, newActivity.InverseActivityHeader);
+                    // อัปเดตข้อมูลลูกของ activity นี้
+                    SetActivitiesUpdate(project, existingActivity.InverseActivityHeader, newActivity.InverseActivityHeader);
                 }
                 else
                 {
-                    // เพิ่ม activity ใหม่
+                    // ถ้าไม่มีข้อมูลเก่า ก็สร้าง activity ใหม่
                     Activity newAct = new Activity
                     {
                         Name = newActivity.Name,
@@ -81,10 +82,22 @@ namespace activityCore.Models
                         ProjectId = project.Id
                     };
 
-                    UpdateActivities(project, newAct.InverseActivityHeader, newActivity.InverseActivityHeader);
+                    // อัปเดตข้อมูลลูกของ activity ที่สร้างใหม่
+                    SetActivitiesUpdate(project, newAct.InverseActivityHeader, newActivity.InverseActivityHeader);
+
+                    // เพิ่ม activity ที่สร้างใหม่ลงในคอลเลกชันของกิจกรรมเก่า
                     oldActivities.Add(newAct);
                 }
             }
+        }
+
+        public static Activity GetActivityRecursiveFn(Activity activity)
+        {
+            activity.InverseActivityHeader = activity.InverseActivityHeader
+                .Where(a => a.IsDelete != true)
+                .Select(a => GetActivityRecursiveFn(a))
+                .ToList();
+            return activity;
         }
 
         //Get All Action
@@ -97,18 +110,8 @@ namespace activityCore.Models
         //Get ID
         public static Activity GetById(ActivityContext db, int id)
         {
-            Activity? activity = db.Activities
-                .Include(a => a.ActivityHeader)
-                    .ThenInclude(a => a.InverseActivityHeader)
-                        .ThenInclude(a => a.InverseActivityHeader)
-                .Include(a => a.ActivityHeader)
-                    .ThenInclude(a => a.ActivityHeader)
-                        .ThenInclude(a => a.InverseActivityHeader)
-                .Include(a => a.InverseActivityHeader)
-                    .ThenInclude(a => a.InverseActivityHeader)
-                .FirstOrDefault(q => q.Id == id && q.IsDelete != true);
-
-            return activity ?? new Activity();
+            Activity? returnThis = db.Activities.Where(q => q.Id == id && q.IsDelete != true).FirstOrDefault();
+            return returnThis ?? new Activity();
         }
 
         // Update Main and Sub
@@ -139,6 +142,7 @@ namespace activityCore.Models
         {
             Activity activity = GetById(db, id);
             activity.IsDelete = true;
+            activity.UpdateDate = DateTime.Now;
             db.Entry(activity).State = EntityState.Modified;
             db.SaveChanges();
 

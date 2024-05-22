@@ -25,44 +25,28 @@ namespace activityCore.Models
         // Get All
         public static List<Project> GetAll(ActivityContext db)
         {
-            List<Project> projects = db.Projects.Where(e => e.IsDelete != true).ToList();
-
-            foreach (Project p in projects)
-            {
-                List<Activity> activities = db.Activities.Where(q => q.IsDelete != true).ToList();
-                p.Activities = activities;
-            }
-
+            List<Project> projects = db.Projects.Where(e => e.IsDelete != true)
+                                                .Include(p => p.Activities.Where(a => a.ActivityHeaderId == null && a.IsDelete != true))
+                                                .Include(p => p.FileXprojects)
+                                                .ToList();
             return projects;
         }
 
         //Get ID
         public static Project GetById(ActivityContext db, int id)
         {
-            Project? project = db.Projects.Where(q => q.Id == id && q.IsDelete != true).FirstOrDefault();
+            Project? project = db.Projects.Where(p => p.Id == id && p.IsDelete != true)
+                                          .Include(p => p.Activities.Where(a => a.IsDelete != true))
+                                            .ThenInclude(a => a.InverseActivityHeader.Where(sa => sa.IsDelete != true))
+                                          .FirstOrDefault();
 
-            // หากไม่พบโปรเจกต์ก็คืนค่าอ็อบเจกต์ Project ว่างเปล่า
-            if (project == null)
+            if (project != null)
             {
-                return new Project();
+                project.Activities = project.Activities.Where(a => a.ActivityHeaderId == null && a.IsDelete != true)
+                                                       .Select(a => Activity.GetActivityRecursiveFn(a)).ToList();
             }
 
-            // ดึงข้อมูลกิจกรรมสำหรับโปรเจกต์นี้
-            List<Activity> activities = db.Activities.Where(a => a.ProjectId == id && a.ActivityHeaderId == null && a.IsDelete != true)
-            .Include(a => a.ActivityHeader)
-                .ThenInclude(a => a.InverseActivityHeader)
-                    .ThenInclude(a => a.InverseActivityHeader)
-            .Include(a => a.ActivityHeader)
-                .ThenInclude(a => a.ActivityHeader)
-                    .ThenInclude(a => a.InverseActivityHeader)
-            .Include(a => a.InverseActivityHeader)
-                    .ThenInclude(a => a.InverseActivityHeader)
-            .OrderBy(q => q.Id).ToList(); // ตามลำดับ
-
-            // เก็บข้อมูลกิจกรรมลงในโปรเจกต์
-            project.Activities = activities;
-
-            return project ?? new Project();
+            return project ?? new Project(); // หากไม่พบโปรเจกต์ก็คืนค่าอ็อบเจกต์ Project ว่างเปล่า
         }
 
         //  Update
@@ -80,7 +64,7 @@ namespace activityCore.Models
             oldProject.UpdateDate = DateTime.Now;
             oldProject.IsDelete = project.IsDelete;
 
-            Activity.UpdateActivities(project, oldProject.Activities, project.Activities);
+            Activity.SetActivitiesUpdate(project, oldProject.Activities, project.Activities);
             db.SaveChanges();
 
             return oldProject;

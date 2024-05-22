@@ -130,7 +130,7 @@ public class ProjectController : ControllerBase
 
         try
         {  // Sub logic
-            Activity.SetActivities(project, project.Activities, projectCreate.Activities);
+            Activity.SetActivitiesCreate(project, project.Activities, projectCreate.Activities);
 
             // หลังจากที่สร้างกิจกรรมทั้งหมดแล้ว จึงทำการเพิ่มโปรเจคลงในฐานข้อมูล แล้วส่งกลับไปยัง Response กลับไปยัง Client
             Project.Create(_db, project);
@@ -229,88 +229,6 @@ public class ProjectController : ControllerBase
     /// </summary>
     /// <param name="project"></param>
     /// <returns>A newly updated Project</returns>
-    /// <remarks>
-    /// Sample request:
-    ///     
-    ///     PUT /Project
-    ///     {
-    ///         "id": 1,
-    ///         "name": "Project123",
-    ///         "startDate": "2022-01-01",
-    ///         "endDate": "2022-01-31",
-    ///         "createDate": "2024-05-10T12:27:38.437+07:00",
-    ///         "updateDate": "2024-05-10T12:27:38.437+07:00",
-    ///         "isDelete": false,
-    ///         "activities": [
-    ///             {
-    ///                 "id": 1,
-    ///                 "projectId": 1,
-    ///                 "name": "Act1",
-    ///                 "createDate": "2024-05-10T12:27:38.433",
-    ///                 "updateDate": "2024-05-10T12:27:38.433",
-    ///                 "isDelete": false,
-    ///                 "inverseActivityHeader": [
-    ///                     {
-    ///                         "id": 3,
-    ///                         "projectId": 1,
-    ///                         "activityHeaderId": 1,
-    ///                         "name": "Act1.1",
-    ///                         "createDate": "2024-05-10T12:27:38.433",
-    ///                         "updateDate": "2024-05-10T12:27:38.433",
-    ///                         "isDelete": false,
-    ///                         "inverseActivityHeader": []
-    ///                     },
-    ///                     {
-    ///                         "name": "Act1.2",
-    ///                         "inverseActivityHeader": []
-    ///                     }
-    ///                 ]
-    ///             },
-    ///             {
-    ///                 "id": 2,
-    ///                 "projectId": 1,
-    ///                 "name": "Act2",
-    ///                 "createDate": "2024-05-10T12:27:38.433",
-    ///                 "updateDate": "2024-05-10T12:27:38.433",
-    ///                 "isDelete": false,
-    ///                 "inverseActivityHeader": [
-    ///                     {
-    ///                         "id": 4,
-    ///                         "projectId": 1,
-    ///                         "activityHeaderId": 2,
-    ///                         "name": "Act2.1",
-    ///                         "createDate": "2024-05-10T12:27:38.433",
-    ///                         "updateDate": "2024-05-10T12:27:38.433",
-    ///                         "isDelete": false,
-    ///                         "inverseActivityHeader": []
-    ///                     },
-    ///                     {
-    ///                         "id": 5,
-    ///                         "projectId": 1,
-    ///                         "activityHeaderId": 2,
-    ///                         "name": "Act2.2",
-    ///                         "createDate": "2024-05-10T12:27:38.433",
-    ///                         "updateDate": "2024-05-10T12:27:38.433",
-    ///                         "isDelete": false,
-    ///                         "inverseActivityHeader": [
-    ///                             {
-    ///                                 "id": 6,
-    ///                                 "projectId": 1,
-    ///                                 "activityHeaderId": 5,
-    ///                                 "name": "Act2.2.1",
-    ///                                 "createDate": "2024-05-10T12:27:38.433",
-    ///                                 "updateDate": "2024-05-10T12:27:38.433",
-    ///                                 "isDelete": false,
-    ///                                 "inverseActivityHeader": []
-    ///                             }
-    ///                         ]
-    ///                     }
-    ///                 ]
-    ///             }
-    ///         ]
-    ///     }
-    ///     
-    /// </remarks>
     /// <response code="200">Success</response>
     /// <response code="400">Bad Request</response>
     /// <response code="401">Unauthorized</response>

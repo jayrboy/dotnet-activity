@@ -18,7 +18,7 @@ public class ActivityController : ControllerBase
         _logger = logger;
     }
 
-    public partial class ActivityCreateRequest
+    public partial class ActivityCreate
     {
         public int? ProjectId { get; set; }
         public int? ActivityHeaderId { get; set; }
@@ -158,10 +158,10 @@ public class ActivityController : ControllerBase
     /// <response code="400">Bad Request</response>
     /// <response code="500">Internal Server Error</response>
     [HttpPost(Name = "CreateActivity")]
-    public ActionResult<Response> Create(List<ActivityCreateRequest> activitiesRequest)
+    public ActionResult<Response> Create(List<ActivityCreate> activityCreate)
     {
         List<Activity> activities = new List<Activity>();
-        activities = activitiesRequest.Select(a => new Activity
+        activities = activityCreate.Select(a => new Activity
         {
             ProjectId = a.ProjectId,
             ActivityHeaderId = a.ActivityHeaderId,
@@ -172,7 +172,7 @@ public class ActivityController : ControllerBase
         {
             foreach (Activity activity in activities)
             {
-                Activity.SetActivitiesCreate(activity);
+                Activity.SetActivities(activity);
                 Activity.Create(_db, activity);
             }
             _db.SaveChanges();
@@ -193,7 +193,6 @@ public class ActivityController : ControllerBase
             };
         }
     }
-
 
     /// <summary>
     /// Get All
