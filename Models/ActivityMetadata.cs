@@ -59,13 +59,18 @@ namespace activityCore.Models
         {
             foreach (Activity newActivity in newActivities)
             {
-                Activity existingActivity = oldActivities.FirstOrDefault(a => a.Id == newActivity.Id);
-
-                if (existingActivity != null)
+                if (newActivity.Id != 0)
                 {
-                    // ถ้ามีข้อมูลเก่า ก็อัปเดตข้อมูลของ activity ที่มีอยู่
-                    existingActivity.Name = newActivity.Name;
-                    existingActivity.UpdateDate = DateTime.Now;
+                    // ข้อมูลกิจกรรมเก่า ที่มีอยู่
+                    Activity existingActivity = oldActivities.FirstOrDefault(a => a.Id == newActivity.Id);
+
+                    if (existingActivity != null)
+                    {
+                        // ถ้ามีข้อมูลเก่า ก็อัปเดตข้อมูลของ activity ที่มีอยู่
+                        existingActivity.Name = newActivity.Name;
+                        existingActivity.UpdateDate = DateTime.Now;
+                        existingActivity.IsDelete = newActivity.IsDelete;
+                    }
 
                     // อัปเดตข้อมูลลูกของ activity นี้
                     SetActivitiesUpdate(project, existingActivity.InverseActivityHeader, newActivity.InverseActivityHeader);
@@ -85,7 +90,7 @@ namespace activityCore.Models
                     // อัปเดตข้อมูลลูกของ activity ที่สร้างใหม่
                     SetActivitiesUpdate(project, newAct.InverseActivityHeader, newActivity.InverseActivityHeader);
 
-                    // เพิ่ม activity ที่สร้างใหม่ลงในคอลเลกชันของกิจกรรมเก่า
+                    // เพิ่ม activity ที่สร้างใหม่ลงในกิจกรรมเก่า
                     oldActivities.Add(newAct);
                 }
             }

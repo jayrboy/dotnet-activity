@@ -254,11 +254,16 @@ public class ProjectController : ControllerBase
             });
         }
 
-        return Ok(new Response
+        return project != null ? Ok(new Response
         {
             Code = 200,
             Message = "Success",
             Data = project
+        }) : StatusCode(404, new Response
+        {
+            Code = 404,
+            Message = "Failed to Project Not Found!",
+            Data = null
         });
     }
 

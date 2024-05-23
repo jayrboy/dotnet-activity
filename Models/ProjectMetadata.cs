@@ -54,7 +54,6 @@ namespace activityCore.Models
             Project oldProject = db.Projects.Include(p => p.Activities)
                                                 .ThenInclude(a => a.InverseActivityHeader)
                                             .FirstOrDefault(p => p.Id == project.Id);
-
             // อัปเดตข้อมูลโปรเจกต์
             oldProject.Name = project.Name;
             oldProject.StartDate = project.StartDate;
@@ -65,6 +64,8 @@ namespace activityCore.Models
 
             // อัปเดตกิจกรรม
             Activity.SetActivitiesUpdate(project, oldProject.Activities, project.Activities);
+
+            // SaveChanges เป็นการดำเนินการเก็บข้อมูลเข้า Database จะคืนค่า (Success, fail)
             db.SaveChanges();
 
             return oldProject;
