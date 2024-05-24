@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace activityCore.Controllers;
 
-[Authorize]
+// [Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class FileController : ControllerBase
@@ -41,7 +41,7 @@ public class FileController : ControllerBase
     ///         "createDate": "2024-05-08T22:25:47.6367441+07:00",
     ///         "updateDate": "2024-05-08T22:25:47.6367441+07:00",
     ///         "isDelete": false,
-    ///         "activities": []
+    ///         "fileXprojects": []
     ///     }
     /// }
     /// ```
@@ -63,7 +63,7 @@ public class FileController : ControllerBase
     /// ```
     /// </response>
     [HttpPost(Name = "UploadFile")]
-    public ActionResult UploadFile(IFormFile formFile)
+    public ActionResult UploadFile(List<IFormFile> formFile)
     {
         if (formFile == null)
         {
@@ -74,23 +74,26 @@ public class FileController : ControllerBase
             });
         }
 
-        Models.File file = new Models.File
+        foreach (IFormFile f in formFile)
         {
-            FileName = formFile.FileName,
-            FilePath = "UploadedFile/ProfileImg/"
-        };
-        file = Models.File.Create(_db, file);
-
-        if (formFile != null && formFile.Length > 0)
-        {
-            string uploads = Path.Combine(_hostingEnvironment.ContentRootPath, "UploadedFile/ProfileImg/" + file.Id);
-            // string filePath = Path.Combine(Server.MapPath("~/UploadedFile/Profile/") + AccountExtensions.File.Id + "/" + file.FileName);
-
-            Directory.CreateDirectory(uploads);
-            string filePath = Path.Combine(uploads, formFile.FileName);
-            using (Stream fileStream = new FileStream(filePath, FileMode.Create))
+            Models.File file = new Models.File
             {
-                formFile.CopyTo(fileStream);
+                FileName = f.FileName,
+                FilePath = "UploadedFile/ProfileImg/"
+            };
+            file = Models.File.Create(_db, file);
+
+            if (f != null && f.Length > 0)
+            {
+                string uploads = Path.Combine(_hostingEnvironment.ContentRootPath, "UploadedFile/ProfileImg/" + file.Id);
+                // string filePath = Path.Combine(Server.MapPath("~/UploadedFile/Profile/") + AccountExtensions.File.Id + "/" + file.FileName);
+
+                Directory.CreateDirectory(uploads);
+                string filePath = Path.Combine(uploads, f.FileName);
+                using (Stream fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    f.CopyTo(fileStream);
+                }
             }
         }
 
@@ -98,7 +101,7 @@ public class FileController : ControllerBase
         {
             Code = 200,
             Message = "Success",
-            Data = file
+            Data = formFile
         });
     }
 
