@@ -28,11 +28,31 @@ namespace activityCore.Models
         // Get All
         public static List<Project> GetAll(ActivityContext db)
         {
-            List<Project> projects = db.Projects.Where(e => e.IsDelete != true)
-                                                .Include(p => p.Activities.Where(a => a.ActivityHeaderId == null && a.IsDelete != true))
+            List<Project> projects = db.Projects.Where(p => p.IsDelete != true)
+                                                .Include(p => p.Activities.Where(a => a.IsDelete != true))
                                                 .Include(p => p.FileXprojects)
+                                                  .ThenInclude(a => a.File)
+                                                .OrderBy(p => p.Id) // ตามลำดับ
                                                 .ToList();
+            if (projects == null)
+            {
+                return new List<Project>();
+            }
+            else
+            {
+                foreach (Project p in projects)
+                {
+                    p.File = new List<File>();
 
+                    foreach (FileXproject f in p.FileXprojects)
+                    {
+                        p.File.Add(f.File);
+                    }
+
+                    p.Activities = p.Activities.Where(a => a.ActivityHeaderId == null && a.IsDelete != true)
+                                                           .Select(a => Activity.GetActivityRecursiveFn(a)).ToList();
+                }
+            }
             return projects;
         }
 

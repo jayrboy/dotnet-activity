@@ -217,7 +217,7 @@ namespace activityCore.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public ActionResult GetAllProduct()
         {
-            List<Project> projects = Project.GetAll(_db).OrderBy(q => q.Id).ToList(); // ตามลำดับ
+            List<Project> projects = Project.GetAll(_db); // ตามลำดับ
 
             return Ok(new Response
             {
@@ -262,15 +262,6 @@ namespace activityCore.Controllers
         public ActionResult GetProjectById(int id)
         {
             Project project = Project.GetById(_db, id);
-
-            // var response = new
-            // {
-            //     Name = project.Name,
-            //     StartDate = project.StartDate,
-            //     EndDate = project.EndDate,
-            //     Activities = project.Activities,
-            //     File = project.File,
-            // };
 
             return project == null
             ? NotFound(new Response
