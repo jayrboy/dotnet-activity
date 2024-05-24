@@ -263,12 +263,21 @@ namespace activityCore.Controllers
         {
             Project project = Project.GetById(_db, id);
 
+            // var response = new
+            // {
+            //     Name = project.Name,
+            //     StartDate = project.StartDate,
+            //     EndDate = project.EndDate,
+            //     Activities = project.Activities,
+            //     File = project.File,
+            // };
+
             return project == null
             ? NotFound(new Response
             {
                 Code = 404,
                 Message = "Not Found",
-                Data = project
+                Data = null
             })
             : Ok(new Response
             {

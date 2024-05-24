@@ -1,45 +1,27 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Reflection;
-using System.Text.Json.Serialization;
-using activityCore.Data;
 using Microsoft.EntityFrameworkCore;
-using System.Text;
 using Microsoft.OpenApi.Models;
-using Microsoft.Net.Http.Headers;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Reflection;
+using activityCore.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-/* ------------------ Database Connect to SQL Server Management Studio ------------------ */
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<ActivityContext>(options => options.UseSqlServer(connectionString));
-
-/* --------------------------- Add services to the container. --------------------------- */
-//TODO: Add CORS Policy
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AngularApp", policy =>
-    {
-        policy.WithOrigins("http://localhost:4200", "https://www.example.com")
-              .WithHeaders("Content-Type")
-              .WithMethods("POST", "GET", "PUT", "DELETE");
-    });
-});
-
+/* ----------------------------- Add services to the container. ---------------------------- */
 builder.Services.AddControllers().AddJsonOptions(options =>
- options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+{
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+});
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     //TODO: Swagger Header
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Version = "v1",
-        Title = "My Activity Project API",
-        Description = "A simple example ASP.NET Core Web API"
-    });
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "My Web API", Version = "v1", Description = "ASP.NET Core Web API" });
 
     // using System.Reflection; //TODO: XML Comment
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -59,17 +41,10 @@ builder.Services.AddSwaggerGen(options =>
     //TODO: Add Security Requirement by OpenApi - Jwt (2)
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
-          {
-              new OpenApiSecurityScheme
-              {
-                  Reference = new OpenApiReference
-                  {
-                      Type = ReferenceType.SecurityScheme,
-                      Id = "Bearer"
-                  }
-              },
-              new string[] { }
-          }
+        {
+            new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } },
+            new string[]{}
+        }
     });
 });
 
@@ -92,7 +67,20 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true
     };
 });
-/* --------------------------- Added services to the container. --------------------------- */
+
+/* ------------------ Database Connect to SQL Server Management Studio --------------------- */
+builder.Services.AddDbContext<ActivityContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+//TODO: Add CORS Policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AngularApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200", "https://www.example.com")
+              .WithHeaders("Content-Type", "Authorization")
+              .WithMethods("POST", "GET", "PUT", "DELETE");
+    });
+});
 
 /* -------------------------------- Web Server ASP.NET Core -------------------------------- */
 var app = builder.Build();
@@ -104,14 +92,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-//TODO: Enable CORS middleware
-app.UseCors("AngularApp");
-
+app.UseCors("AngularApp");  //TODO: Enable CORS middleware
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
-/* -------------------------------- Web Server ASP.NET Core -------------------------------- */

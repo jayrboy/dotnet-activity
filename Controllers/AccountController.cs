@@ -3,147 +3,73 @@ using activityCore.Data;
 using activityCore.Models;
 using Microsoft.AspNetCore.Authorization;
 
-[Authorize(Roles = "admin, dev")]
-[ApiController]
-[Route("api/[controller]")]
-[Produces("application/json")]
-public class AccountController : ControllerBase
+namespace activityCore.Controllers
 {
-    private ActivityContext _db = new ActivityContext();
-
-    private readonly ILogger<AccountController> _logger;
-
-    public AccountController(ILogger<AccountController> logger)
+    [Authorize(Roles = "admin, dev")]
+    [ApiController]
+    [Route("api/[controller]")]
+    [Produces("application/json")]
+    public class AccountController : ControllerBase
     {
-        _logger = logger;
-    }
+        private ActivityContext _db = new ActivityContext();
 
-    public struct AccountCreate
-    {
-        /// <summary>
-        /// Username of User
-        /// </summary>
-        /// <example>John</example>
-        /// <required>true</required>
-        public string? Username { get; set; }
+        private readonly ILogger<AccountController> _logger;
 
-        /// <summary>
-        /// Password of User
-        /// </summary>
-        /// <example>1234</example>
-        /// <required>true</required>
-        public string? Password { get; set; }
-
-        /// <summary>
-        /// Role of User
-        /// </summary>
-        /// <example>user</example>
-        /// <required>true</required>
-        public string? Role { get; set; }
-    }
-
-    /// <summary>
-    /// Create User Account
-    /// </summary>
-    [HttpPost(Name = "CreateUser")]
-    public ActionResult CreateUser(AccountCreate AccountCreate)
-    {
-        Account user = new Account
+        public AccountController(ILogger<AccountController> logger)
         {
-            Username = AccountCreate.Username,
-            Password = AccountCreate.Password,
-            Role = AccountCreate.Role,
-        };
-        try
-        {
-            user = Account.Create(_db, user);
+            _logger = logger;
         }
-        catch
+
+        public struct AccountCreate
         {
-            // Handle unique constraint violation (duplicate username)
-            return StatusCode(409, new Response
+            /// <summary>
+            /// Username of User
+            /// </summary>
+            /// <example>John</example>
+            /// <required>true</required>
+            public string? Username { get; set; }
+
+            /// <summary>
+            /// Password of User
+            /// </summary>
+            /// <example>1234</example>
+            /// <required>true</required>
+            public string? Password { get; set; }
+
+            /// <summary>
+            /// Role of User
+            /// </summary>
+            /// <example>user</example>
+            /// <required>true</required>
+            public string? Role { get; set; }
+        }
+
+        /// <summary>
+        /// Create User Account
+        /// </summary>
+        [HttpPost(Name = "CreateUser")]
+        public ActionResult CreateUser(AccountCreate AccountCreate)
+        {
+            Account user = new Account
             {
-                Code = 409,
-                Message = "Username already exists",
-                Data = null
-            });
-        }
-        return Ok(new Response
-        {
-            Code = 200,
-            Message = "Success",
-            Data = user
-        });
-    }
-
-    /// <summary>
-    /// Get All
-    /// </summary>
-    [HttpGet(Name = "GetAllUsers")]
-    public ActionResult GetAllUsers()
-    {
-        List<Account> users = Account.GetAll(_db).ToList();
-        return Ok(new Response
-        {
-            Code = 200,
-            Message = "Success",
-            Data = users
-        });
-    }
-
-    /// <summary>
-    /// Get ID
-    /// </summary>
-    [HttpGet("{id}", Name = "GetUserById")]
-    public ActionResult GetUserById(int id)
-    {
-        Account user = Account.GetById(_db, id);
-        return Ok(new Response
-        {
-            Code = 200,
-            Message = "Success",
-            Data = user
-        });
-    }
-
-    /// <summary>
-    /// Update
-    /// </summary>
-    /// <remarks>
-    /// Sample request:
-    /// ```json
-    /// {
-    ///     "id": 1,
-    ///     "username": "ChangeU",
-    ///     "password": "ChangeP",
-    ///     "createDate": "2024-05-08T14:57:20.942Z",
-    ///     "updateDate": "2024-05-08T14:57:20.942Z",
-    ///     "isDelete": false
-    /// }
-    /// ```
-    /// </remarks>
-    /// <returns></returns>
-    [HttpPut(Name = "UpdateUser")]
-    public ActionResult UpdateUser(Account user)
-    {
-        user = Account.Update(_db, user);
-        return Ok(new Response
-        {
-            Code = 200,
-            Message = "Success",
-            Data = user
-        });
-    }
-
-    /// <summary>
-    /// Delete ID
-    /// </summary>
-    [HttpDelete("{id}", Name = "DeleteUserById")]
-    public ActionResult DeleteUserById(int id)
-    {
-        try
-        {
-            Account user = Account.Delete(_db, id);
+                Username = AccountCreate.Username,
+                Password = AccountCreate.Password,
+                Role = AccountCreate.Role,
+            };
+            try
+            {
+                user = Account.Create(_db, user);
+            }
+            catch
+            {
+                // Handle unique constraint violation (duplicate username)
+                return StatusCode(409, new Response
+                {
+                    Code = 409,
+                    Message = "Username already exists",
+                    Data = null
+                });
+            }
             return Ok(new Response
             {
                 Code = 200,
@@ -151,17 +77,94 @@ public class AccountController : ControllerBase
                 Data = user
             });
         }
-        catch
+
+        /// <summary>
+        /// Get All
+        /// </summary>
+        [HttpGet(Name = "GetAllUsers")]
+        public ActionResult GetAllUsers()
         {
-            // ถ้าไม่พบข้อมูล user ตาม id ที่ระบุ
-            return NotFound(new Response
+            List<Account> users = Account.GetAll(_db).ToList();
+            return Ok(new Response
             {
-                Code = 404,
-                Message = "User not found",
-                Data = null
+                Code = 200,
+                Message = "Success",
+                Data = users
             });
         }
 
+        /// <summary>
+        /// Get ID
+        /// </summary>
+        [HttpGet("{id}", Name = "GetUserById")]
+        public ActionResult GetUserById(int id)
+        {
+            Account user = Account.GetById(_db, id);
+            return Ok(new Response
+            {
+                Code = 200,
+                Message = "Success",
+                Data = user
+            });
+        }
 
+        /// <summary>
+        /// Update
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        /// ```json
+        /// {
+        ///     "id": 1,
+        ///     "username": "ChangeU",
+        ///     "password": "ChangeP",
+        ///     "createDate": "2024-05-08T14:57:20.942Z",
+        ///     "updateDate": "2024-05-08T14:57:20.942Z",
+        ///     "isDelete": false
+        /// }
+        /// ```
+        /// </remarks>
+        /// <returns></returns>
+        [HttpPut(Name = "UpdateUser")]
+        public ActionResult UpdateUser(Account user)
+        {
+            user = Account.Update(_db, user);
+            return Ok(new Response
+            {
+                Code = 200,
+                Message = "Success",
+                Data = user
+            });
+        }
+
+        /// <summary>
+        /// Delete ID
+        /// </summary>
+        [HttpDelete("{id}", Name = "DeleteUserById")]
+        public ActionResult DeleteUserById(int id)
+        {
+            try
+            {
+                Account user = Account.Delete(_db, id);
+                return Ok(new Response
+                {
+                    Code = 200,
+                    Message = "Success",
+                    Data = user
+                });
+            }
+            catch
+            {
+                // ถ้าไม่พบข้อมูล user ตาม id ที่ระบุ
+                return NotFound(new Response
+                {
+                    Code = 404,
+                    Message = "User not found",
+                    Data = null
+                });
+            }
+
+
+        }
     }
 }

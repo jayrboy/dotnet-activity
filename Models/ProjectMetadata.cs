@@ -1,6 +1,8 @@
 using activityCore.Data;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace activityCore.Models
 {
@@ -9,6 +11,8 @@ namespace activityCore.Models
     [MetadataType(typeof(ProjectMetadata))]
     public partial class Project
     {
+        [NotMapped] // ไม่สร้าง attribute นี้ในฐานข้อมูล
+        public List<File>? File { get; set; }
         //Create Action
         public static Project Create(ActivityContext db, Project project)
         {
@@ -28,6 +32,7 @@ namespace activityCore.Models
                                                 .Include(p => p.Activities.Where(a => a.ActivityHeaderId == null && a.IsDelete != true))
                                                 .Include(p => p.FileXprojects)
                                                 .ToList();
+
             return projects;
         }
 
@@ -37,15 +42,26 @@ namespace activityCore.Models
             Project? project = db.Projects.Where(p => p.Id == id && p.IsDelete != true)
                                           .Include(p => p.Activities.Where(a => a.IsDelete != true))
                                             .ThenInclude(a => a.InverseActivityHeader.Where(sa => sa.IsDelete != true))
+                                          .Include(p => p.FileXprojects)
+                                            .ThenInclude(a => a.File)
                                           .FirstOrDefault();
-
-            if (project != null)
+            if (project == null)
             {
+                return new Project();
+            }
+            else
+            {
+                project.File = new List<File>();
+
+                foreach (FileXproject f in project.FileXprojects)
+                {
+                    project.File.Add(f.File);
+                }
+
                 project.Activities = project.Activities.Where(a => a.ActivityHeaderId == null && a.IsDelete != true)
                                                        .Select(a => Activity.GetActivityRecursiveFn(a)).ToList();
             }
-
-            return project ?? new Project(); // หากไม่พบโปรเจกต์ก็คืนค่าอ็อบเจกต์ Project ว่างเปล่า
+            return project;
         }
 
         //  Update
