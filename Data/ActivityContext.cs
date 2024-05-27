@@ -17,40 +17,23 @@ public partial class ActivityContext : DbContext
     {
     }
 
-    public virtual DbSet<Account> Accounts { get; set; }
-
     public virtual DbSet<Activity> Activities { get; set; }
 
     public virtual DbSet<File> Files { get; set; }
 
-    public virtual DbSet<FileXproject> FileXprojects { get; set; }
-
     public virtual DbSet<Project> Projects { get; set; }
+
+    public virtual DbSet<ProjectFile> ProjectFiles { get; set; }
+
+    public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=BUMBIM\\SQLEXPRESS;Initial Catalog=Activity;Integrated Security=True;Encrypt=True;Trust Server Certificate=True");
+        => optionsBuilder.UseSqlServer("Data Source=BUMBIM\\SQLEXPRESS;Initial Catalog=Activity;Integrated Security=True;Encrypt=True;TrustServerCertificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.UseCollation("Thai_CI_AS");
-
-        modelBuilder.Entity<Account>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("PK_User");
-
-            entity.ToTable("Account");
-
-            entity.HasIndex(e => e.Username, "Unique_Username").IsUnique();
-
-            entity.Property(e => e.Id).HasColumnName("ID");
-            entity.Property(e => e.CreateDate).HasColumnType("datetime");
-            entity.Property(e => e.IsDelete).HasColumnName("isDelete");
-            entity.Property(e => e.Password).HasMaxLength(50);
-            entity.Property(e => e.Role).HasMaxLength(50);
-            entity.Property(e => e.UpdateDate).HasColumnType("datetime");
-            entity.Property(e => e.Username).HasMaxLength(50);
-        });
 
         modelBuilder.Entity<Activity>(entity =>
         {
@@ -83,26 +66,6 @@ public partial class ActivityContext : DbContext
             entity.Property(e => e.UpdateDate).HasColumnType("datetime");
         });
 
-        modelBuilder.Entity<FileXproject>(entity =>
-        {
-            entity.ToTable("FileXProject");
-
-            entity.Property(e => e.Id).HasColumnName("ID");
-            entity.Property(e => e.CreateDate).HasColumnType("datetime");
-            entity.Property(e => e.FileId).HasColumnName("FileID");
-            entity.Property(e => e.IsDelete).HasColumnName("isDelete");
-            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
-            entity.Property(e => e.UpdateDate).HasColumnType("datetime");
-
-            entity.HasOne(d => d.File).WithMany(p => p.FileXprojects)
-                .HasForeignKey(d => d.FileId)
-                .HasConstraintName("FK_FileXProject_File");
-
-            entity.HasOne(d => d.Project).WithMany(p => p.FileXprojects)
-                .HasForeignKey(d => d.ProjectId)
-                .HasConstraintName("FK_FileXProject_Project");
-        });
-
         modelBuilder.Entity<Project>(entity =>
         {
             entity.ToTable("Project");
@@ -112,6 +75,43 @@ public partial class ActivityContext : DbContext
             entity.Property(e => e.IsDelete).HasColumnName("isDelete");
             entity.Property(e => e.Name).HasMaxLength(50);
             entity.Property(e => e.UpdateDate).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<ProjectFile>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_FileXProject");
+
+            entity.ToTable("ProjectFile");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.CreateDate).HasColumnType("datetime");
+            entity.Property(e => e.FileId).HasColumnName("FileID");
+            entity.Property(e => e.IsDelete).HasColumnName("isDelete");
+            entity.Property(e => e.ProjectId).HasColumnName("ProjectID");
+            entity.Property(e => e.UpdateDate).HasColumnType("datetime");
+
+            entity.HasOne(d => d.File).WithMany(p => p.ProjectFiles)
+                .HasForeignKey(d => d.FileId)
+                .HasConstraintName("FK_FileXProject_File");
+
+            entity.HasOne(d => d.Project).WithMany(p => p.ProjectFiles)
+                .HasForeignKey(d => d.ProjectId)
+                .HasConstraintName("FK_FileXProject_Project");
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.ToTable("User");
+
+            entity.HasIndex(e => e.Username, "Unique_Username").IsUnique();
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.CreateDate).HasColumnType("datetime");
+            entity.Property(e => e.IsDelete).HasColumnName("isDelete");
+            entity.Property(e => e.Password).HasMaxLength(50);
+            entity.Property(e => e.Role).HasMaxLength(50);
+            entity.Property(e => e.UpdateDate).HasColumnType("datetime");
+            entity.Property(e => e.Username).HasMaxLength(50);
         });
 
         OnModelCreatingPartial(modelBuilder);

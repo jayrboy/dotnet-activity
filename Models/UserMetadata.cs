@@ -4,40 +4,40 @@ using System.ComponentModel.DataAnnotations;
 
 namespace activityCore.Models
 {
-    public class AccountMetadata { }
+    public class UserMetadata { }
 
-    [MetadataType(typeof(AccountMetadata))]
-    public partial class Account
+    [MetadataType(typeof(UserMetadata))]
+    public partial class User
     {
         // Create Action
-        public static Account Create(ActivityContext db, Account user)
+        public static User Create(ActivityContext db, User user)
         {
             user.Role = user.Role;
             user.CreateDate = DateTime.Now;
             user.UpdateDate = DateTime.Now;
             user.IsDelete = false;
-            db.Accounts.Add(user);
+            db.Users.Add(user);
             db.SaveChanges();
 
             return user;
         }
 
         //Get All Action
-        public static List<Account> GetAll(ActivityContext db)
+        public static List<User> GetAll(ActivityContext db)
         {
-            List<Account> users = db.Accounts.Where(q => q.IsDelete != true).ToList();
+            List<User> users = db.Users.Where(q => q.IsDelete != true).ToList();
             return users;
         }
 
         //Get ID Action
-        public static Account GetById(ActivityContext db, int id)
+        public static User GetById(ActivityContext db, int id)
         {
-            Account? result = db.Accounts.Where(q => q.Id == id && q.IsDelete != true).FirstOrDefault();
-            return result ?? new Account();
+            User? result = db.Users.Where(q => q.Id == id && q.IsDelete != true).FirstOrDefault();
+            return result ?? new User();
         }
 
         //Update Action
-        public static Account Update(ActivityContext db, Account user)
+        public static User Update(ActivityContext db, User user)
         {
             user.UpdateDate = DateTime.Now;
             db.Entry(user).State = EntityState.Modified;
@@ -47,9 +47,9 @@ namespace activityCore.Models
         }
 
         //Delete Action
-        public static Account Delete(ActivityContext db, int id)
+        public static User Delete(ActivityContext db, int id)
         {
-            Account user = GetById(db, id);
+            User user = GetById(db, id);
             user.IsDelete = true;
             db.Entry(user).State = EntityState.Modified;
             db.SaveChanges();

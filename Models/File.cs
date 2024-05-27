@@ -17,5 +17,5 @@ public partial class File
 
     public bool? IsDelete { get; set; }
 
-    public virtual ICollection<FileXproject> FileXprojects { get; set; } = new List<FileXproject>();
+    public virtual ICollection<ProjectFile> ProjectFiles { get; set; } = new List<ProjectFile>();
 }

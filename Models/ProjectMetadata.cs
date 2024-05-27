@@ -30,7 +30,7 @@ namespace activityCore.Models
         {
             List<Project> projects = db.Projects.Where(p => p.IsDelete != true)
                                                 .Include(p => p.Activities.Where(a => a.IsDelete != true))
-                                                .Include(p => p.FileXprojects)
+                                                .Include(p => p.ProjectFiles)
                                                   .ThenInclude(a => a.File)
                                                 .OrderBy(p => p.Id) // ตามลำดับ
                                                 .ToList();
@@ -44,7 +44,7 @@ namespace activityCore.Models
                 {
                     p.File = new List<File>();
 
-                    foreach (FileXproject f in p.FileXprojects)
+                    foreach (ProjectFile f in p.ProjectFiles)
                     {
                         p.File.Add(f.File);
                     }
@@ -62,7 +62,7 @@ namespace activityCore.Models
             Project? project = db.Projects.Where(p => p.Id == id && p.IsDelete != true)
                                           .Include(p => p.Activities.Where(a => a.IsDelete != true))
                                             .ThenInclude(a => a.InverseActivityHeader.Where(sa => sa.IsDelete != true))
-                                          .Include(p => p.FileXprojects)
+                                          .Include(p => p.ProjectFiles)
                                             .ThenInclude(a => a.File)
                                           .FirstOrDefault();
             if (project == null)
@@ -73,7 +73,7 @@ namespace activityCore.Models
             {
                 project.File = new List<File>();
 
-                foreach (FileXproject f in project.FileXprojects)
+                foreach (ProjectFile f in project.ProjectFiles)
                 {
                     project.File.Add(f.File);
                 }
@@ -89,7 +89,7 @@ namespace activityCore.Models
         {
             Project? oldProject = db.Projects.Include(p => p.Activities)
                                                 .ThenInclude(a => a.InverseActivityHeader)
-                                            .Include(f => f.FileXprojects)
+                                            .Include(f => f.ProjectFiles)
                                                 .ThenInclude(f => f.File)
                                             .FirstOrDefault(p => p.Id == project.Id);
             // อัปเดตข้อมูลโปรเจกต์

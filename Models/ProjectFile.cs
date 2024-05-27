@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace activityCore.Models;
 
-public partial class FileXproject
+public partial class ProjectFile
 {
     public int Id { get; set; }
 

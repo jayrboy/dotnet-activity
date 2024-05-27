@@ -132,9 +132,6 @@ namespace activityCore.Controllers
         /// <response code="400">If the project is null</response>
         /// <response code="401">Unauthorized</response>
         [HttpPost(Name = "CreateProject")]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public ActionResult<Response> CreateProject([FromForm] ProjectFileCreate projectFileCreate)
         {
             //(2) [FromFrom] string Convert to (Json Serializer + Options)
@@ -180,13 +177,13 @@ namespace activityCore.Controllers
                         }
                     }
 
-                    FileXproject fileXproject = new FileXproject
+                    ProjectFile projectFile = new ProjectFile
                     {
                         ProjectId = project.Id,
                         FileId = file.Id,
                     };
                     //(6) Save FileXproject Table
-                    FileXproject.Create(_db, fileXproject);
+                    ProjectFile.Create(_db, projectFile);
                 }
 
                 return Ok(new Response
@@ -214,8 +211,6 @@ namespace activityCore.Controllers
         /// <response code="200">Success</response>
         /// <response code="401">Unauthorized</response>
         [HttpGet(Name = "GetAll")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public ActionResult GetAllProduct()
         {
             List<Project> projects = Project.GetAll(_db); // ตามลำดับ
@@ -233,33 +228,11 @@ namespace activityCore.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns>Project By ID</returns>
-        /// <response code="200">
-        /// Success
-        /// 
-        ///     {
-        ///         "Code": 200,
-        ///         "Message": "Success",
-        ///         "Data": {
-        ///             "id": 1,
-        ///             "name": "Project123",
-        ///             "startDate": "2022-01-01",
-        ///             "endDate": "2022-01-31",
-        ///             "createDate": "2024-05-07T11:55:57.0455498+07:00",
-        ///             "updateDate": "2024-05-07T11:55:57.0455541+07:00",
-        ///             "isDelete": false,
-        ///             "activities": []
-        ///         }
-        ///     }
-        ///     
-        /// </response>
+        /// <response code="200">Success</response>
         /// <response code="400">Bad Request</response>
         /// <response code="401">Unauthorized</response>
         /// <response code="500">Internal Server Error</response>
         [HttpGet("{id}", Name = "GetProjectById")]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public ActionResult GetProjectById(int id)
         {
             Project project = Project.GetById(_db, id);
@@ -289,15 +262,78 @@ namespace activityCore.Controllers
         /// <response code="401">Unauthorized</response>
         /// <response code="500">Internal Server Error</response>
         [HttpPut(Name = "UpdateProject")]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public ActionResult UpdateProject([FromBody] Project project)
+        public ActionResult UpdateProject([FromForm] string project, List<IFormFile> formFile)
         {
             try
             {
-                project = Project.Update(_db, project);
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                Project? projectJson = JsonSerializer.Deserialize<Project>(project, options);
+
+                // //TODO: แก่ไข หรือ เพิ่มไฟล์เพิ่มจาก project.File ของเก่า และกรณีมีเพิ่มเข้ามาจาก formFile
+                // รับข้อมูล FromForm เอา product ID ไปหาข้อมูลโครงการเก่า
+                Project? updateProject = Project.GetById(_db, projectJson.Id);
+
+                // นำข้อมูลที่หา มากำหนดข้อมูลใหม่ เพื่ออัปเดทข้อมูลโครงการ
+                updateProject.Name = projectJson.Name;
+                updateProject.StartDate = projectJson.StartDate;
+                updateProject.EndDate = projectJson.EndDate;
+                updateProject.UpdateDate = DateTime.Now;
+                updateProject.IsDelete = projectJson.IsDelete;
+
+                Activity.SetActivitiesCreate(updateProject, updateProject.Activities, projectJson.Activities);
+
+
+                //TODO: แก้ไขไฟล์ที่มีอยู่ในโครงการ (จาก project เก่าที่ส่งมาแก้ไข)
+                foreach (Models.File f in projectJson.File.Where(q => q.IsDelete == true))
+                {
+                    Models.File existingFile = Models.File.GetById(_db, f.Id);
+
+                    if (existingFile != null && existingFile.IsDelete != true)
+                    {
+                        existingFile.IsDelete = f.IsDelete;
+                        Models.File.Update(_db, existingFile);
+                    }
+                }
+
+                //TODO: เพิ่มไฟล์ใหม่ (จาก formFile)
+                foreach (IFormFile f in formFile)
+                {
+                    Models.File newFile = new Models.File
+                    {
+                        FileName = f.FileName,
+                        FilePath = "UploadedFile/ProjectFile/",
+                    };
+
+                    Models.File.Create(_db, newFile); // เพิ่มข้อมูลเข้า File Table เพื่อที่จะเอา Id
+
+                    if (f.Length > 0)
+                    {
+                        string uploads = Path.Combine(_hostingEnvironment.ContentRootPath, "UploadedFile/ProjectFile/" + newFile.Id);
+                        Directory.CreateDirectory(uploads);
+
+                        string filePath = Path.Combine(uploads, f.FileName);
+                        using (Stream fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            f.CopyTo(fileStream);
+                        }
+                    }
+
+                    ProjectFile projectFile = new ProjectFile
+                    {
+                        ProjectId = updateProject.Id,
+                        FileId = newFile.Id
+                    };
+
+                    ProjectFile.Create(_db, projectFile);
+                }
+
+                Project.Update(_db, updateProject);
+
+                return Ok(new Response
+                {
+                    Code = 200,
+                    Message = "Success",
+                });
                 // Add File
             }
             catch (Exception e)
@@ -309,13 +345,6 @@ namespace activityCore.Controllers
                     Data = null
                 });
             }
-
-            return Ok(new Response
-            {
-                Code = 200,
-                Message = "Success",
-                Data = project
-            });
         }
 
         /// <summary>
@@ -323,34 +352,11 @@ namespace activityCore.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns>Product</returns>
-        /// <response code="200">
-        /// Success
-        ///  ```json
-        ///  
-        ///     {
-        ///         "Code": 200,
-        ///         "Message": "Success",
-        ///         "Data": {
-        ///             "id": 1,
-        ///             "name": "Project123",
-        ///             "startDate": "2022-01-01",
-        ///             "endDate": "2022-01-31",
-        ///             "createDate": "2024-05-07T11:55:57.0455498+07:00",
-        ///             "updateDate": "2024-05-07T11:55:57.0455541+07:00",
-        ///             "isDelete": true,
-        ///             "activities": []
-        ///         }
-        ///     }
-        /// 
-        /// </response>
+        /// <response code="200">Success</response>
         /// <response code="400">Bad Request</response>
         /// <response code="401">Unauthorized</response>
         /// <response code="500">Internal Server Error</response>
         [HttpDelete("{id}", Name = "DeleteProjectById")]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public ActionResult DeleteProjectById(int id)
         {
             try
@@ -376,7 +382,10 @@ namespace activityCore.Controllers
             }
         }
 
-        /* ---------------------------------------- Testing (Response, Request) ---------------------------------------- */
+
+
+        /* ---------------------------------------- Testing (Response, Request) ------------------------------------------ */
+
         [HttpPost("Test")]
         public ActionResult<Response> TestApiUpdate([FromForm] string project, List<IFormFile> formFile)
         {
@@ -432,13 +441,13 @@ namespace activityCore.Controllers
                     }
                 }
 
-                FileXproject fileXproject = new FileXproject
+                ProjectFile projectFile = new ProjectFile
                 {
                     ProjectId = updateProject.Id,
                     FileId = newFile.Id
                 };
 
-                FileXproject.Create(_db, fileXproject);
+                ProjectFile.Create(_db, projectFile);
             }
 
             Project.Update(_db, updateProject);
@@ -449,6 +458,7 @@ namespace activityCore.Controllers
                 Message = "Success",
             });
         }
-        /* ---------------------------------------- Testing (Response, Request) ---------------------------------------- */
+
+        /* ---------------------------------------- Testing (Response, Request) ^ ---------------------------------------- */
     }
 }

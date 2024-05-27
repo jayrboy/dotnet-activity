@@ -1,16 +1,22 @@
 using Microsoft.AspNetCore.Mvc;
 using activityCore.Data;
 using activityCore.Models;
-using Microsoft.AspNetCore.Authorization;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System.ComponentModel.DataAnnotations;
 
 namespace activityCore.Controllers
 {
-    [Authorize(Roles = "admin, dev")]
     [ApiController]
     [Route("api/[controller]")]
-    [Produces("application/json")]
     public class AccountController : ControllerBase
     {
+        private const string TokenSecret = "YourSecretKeyForAuthenticationOfApplicationDeveloper";
+
+        private static readonly TimeSpan TokenLifetime = TimeSpan.FromMinutes(10);
+
         private ActivityContext _db = new ActivityContext();
 
         private readonly ILogger<AccountController> _logger;
@@ -20,13 +26,15 @@ namespace activityCore.Controllers
             _logger = logger;
         }
 
-        public struct AccountCreate
+        public struct RegisterCreate
         {
             /// <summary>
             /// Username of User
             /// </summary>
             /// <example>John</example>
             /// <required>true</required>
+            [Required(ErrorMessage = "User Name is required")]
+            [RegularExpression(@"^[a-zA-Z0-9]*$")]
             public string? Username { get; set; }
 
             /// <summary>
@@ -34,6 +42,7 @@ namespace activityCore.Controllers
             /// </summary>
             /// <example>1234</example>
             /// <required>true</required>
+            [Required(ErrorMessage = "Password is required")]
             public string? Password { get; set; }
 
             /// <summary>
@@ -45,24 +54,179 @@ namespace activityCore.Controllers
         }
 
         /// <summary>
-        /// Create User Account
+        /// Generate Token
         /// </summary>
-        [HttpPost(Name = "CreateUser")]
-        public ActionResult CreateUser(AccountCreate AccountCreate)
+        /// <remarks>
+        /// Sample request:
+        /// 
+        ///     POST /GenerateToken
+        ///     {
+        ///         "id": 0,
+        ///         "username": "string",
+        ///         "password": "string",
+        ///         "role": "admin",
+        ///         "createDate": "2024-05-27T15:02:54.076Z",
+        ///         "updateDate": "2024-05-27T15:02:54.076Z",
+        ///         "isDelete": true
+        ///     }
+        ///     
+        /// </remarks>
+        [HttpPost("token", Name = "GenerateToken")]
+        public string GenerateToken([FromBody] User user)
         {
-            Account user = new Account
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(TokenSecret);
+
+            var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim(ClaimTypes.Role, user.Role) //TODO: Add Role parameter
+            // Add more claims as needed
+        };
+
+            var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Username = AccountCreate.Username,
-                Password = AccountCreate.Password,
-                Role = AccountCreate.Role,
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.Add(TokenLifetime),
+                Issuer = "http://localhost:8000",
+                Audience = "http://localhost:8000",
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            if (token != null)
+            {
+                var jwt = tokenHandler.WriteToken(token);
+                return jwt;
+            }
+            else
+            {
+                return "Failed to write token.";
+            }
+        }
+
+        /// <summary>
+        /// Login
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        /// 
+        ///     POST /Login
+        ///     {
+        ///         "username": "admin",
+        ///         "password": "1234"
+        ///     }
+        ///     
+        /// </remarks>
+        /// <returns></returns>
+        /// <response code="200">
+        /// Success
+        /// 
+        ///     {
+        ///         "Code": 200,
+        ///         "Message": "Success",
+        ///         "Data": "token"
+        ///     }
+        /// 
+        /// </response>
+        /// <response code="409">
+        /// Conflict
+        ///     
+        ///     {
+        ///         "code": 409,
+        ///         "message": "Username already exists",
+        ///         "data": null
+        ///     }
+        ///     
+        /// </response>
+        [HttpPost("Login", Name = "Login")]
+        public IActionResult Login([FromBody] User request)
+        {
+            User? user = _db.Users.FirstOrDefault(doc => doc.Username == request.Username && doc.Password == request.Password && doc.IsDelete == false);
+            string bearerToken;
+
             try
             {
-                user = Account.Create(_db, user);
+                bearerToken = GenerateToken(user);
             }
             catch
             {
-                // Handle unique constraint violation (duplicate username)
+                return BadRequest(new Response
+                {
+                    Code = 400,
+                    Message = "Bad Request to Username & Password",
+                    Data = null
+                }
+                );
+            }
+            return Ok(new Response
+            {
+                Code = 200,
+                Message = "Login Success",
+                Data = new
+                {
+                    token = bearerToken
+                }
+            });
+        }
+
+        /// <summary>
+        /// Register
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        /// 
+        ///     POST /Register
+        ///     {
+        ///         "username": "John",
+        ///         "password": "1234"
+        ///     }
+        ///     
+        /// </remarks>
+        /// <returns></returns>
+        /// <response code="201">
+        /// Created Successfully
+        /// 
+        ///     {
+        ///         "Code": 201,
+        ///         "Message": "Created Successfully",
+        ///         "Data": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6ImFkbWluIiwibmJmIjoxNzE1MTgwNzM0LCJleHAiOjE3MTUxODA3OTQsImlhdCI6MTcxNTE4MDczNCwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDAwIiwiYXVkIjoiaHR0cDovL2xvY2FsaG9zdDo4MDAwIn0.fJlV5TqX63mY0g9xHT48PH8W1rgARNocPbpaNjA8myQ"
+        ///     }
+        ///     
+        /// </response>
+        /// <response code="409">
+        /// Conflict
+        /// 
+        ///     {
+        ///         "code": 409,
+        ///         "message": "Username already exists",
+        ///         "data": null
+        ///     }
+        ///     
+        /// </response>
+        [HttpPost("Register", Name = "Register")]
+        public ActionResult Register(RegisterCreate registerCreate)
+        {
+            if (registerCreate.Role.IsNullOrEmpty())
+            {
+                registerCreate.Role = "user";
+            }
+
+            User user = new User
+            {
+                Username = registerCreate.Username,
+                Password = registerCreate.Password,
+                Role = registerCreate.Role,
+            };
+
+            try
+            {
+                user = Models.User.Create(_db, user);
+            }
+            catch
+            {
+                // Handle unique key constraint violation (duplicate username)
                 return StatusCode(409, new Response
                 {
                     Code = 409,
@@ -70,101 +234,20 @@ namespace activityCore.Controllers
                     Data = null
                 });
             }
-            return Ok(new Response
-            {
-                Code = 200,
-                Message = "Success",
-                Data = user
-            });
-        }
 
-        /// <summary>
-        /// Get All
-        /// </summary>
-        [HttpGet(Name = "GetAllUsers")]
-        public ActionResult GetAllUsers()
-        {
-            List<Account> users = Account.GetAll(_db).ToList();
-            return Ok(new Response
-            {
-                Code = 200,
-                Message = "Success",
-                Data = users
-            });
-        }
-
-        /// <summary>
-        /// Get ID
-        /// </summary>
-        [HttpGet("{id}", Name = "GetUserById")]
-        public ActionResult GetUserById(int id)
-        {
-            Account user = Account.GetById(_db, id);
-            return Ok(new Response
-            {
-                Code = 200,
-                Message = "Success",
-                Data = user
-            });
-        }
-
-        /// <summary>
-        /// Update
-        /// </summary>
-        /// <remarks>
-        /// Sample request:
-        /// ```json
-        /// {
-        ///     "id": 1,
-        ///     "username": "ChangeU",
-        ///     "password": "ChangeP",
-        ///     "createDate": "2024-05-08T14:57:20.942Z",
-        ///     "updateDate": "2024-05-08T14:57:20.942Z",
-        ///     "isDelete": false
-        /// }
-        /// ```
-        /// </remarks>
-        /// <returns></returns>
-        [HttpPut(Name = "UpdateUser")]
-        public ActionResult UpdateUser(Account user)
-        {
-            user = Account.Update(_db, user);
-            return Ok(new Response
-            {
-                Code = 200,
-                Message = "Success",
-                Data = user
-            });
-        }
-
-        /// <summary>
-        /// Delete ID
-        /// </summary>
-        [HttpDelete("{id}", Name = "DeleteUserById")]
-        public ActionResult DeleteUserById(int id)
-        {
-            try
-            {
-                Account user = Account.Delete(_db, id);
-                return Ok(new Response
+            return user.Username == null || user.Password == null || user.Role == null
+                ? BadRequest(new Response
                 {
-                    Code = 200,
-                    Message = "Success",
+                    Code = 400,
+                    Message = "Bad Request",
+                    Data = null
+                })
+                : Ok(new Response
+                {
+                    Code = 201,
+                    Message = "Created Successfully",
                     Data = user
                 });
-            }
-            catch
-            {
-                // ถ้าไม่พบข้อมูล user ตาม id ที่ระบุ
-                return NotFound(new Response
-                {
-                    Code = 404,
-                    Message = "User not found",
-                    Data = null
-                });
-            }
-
-
         }
     }
 }
