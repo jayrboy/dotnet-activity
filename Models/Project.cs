@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace activityCore.Models;
@@ -22,6 +23,6 @@ public partial class Project
 
     public virtual ICollection<Activity>? Activities { get; set; } = new List<Activity>();
 
-    [JsonIgnore]
+    // [JsonIgnore] // property ที่จะถูก serialize
     public virtual ICollection<FileXproject>? FileXprojects { get; set; } = new List<FileXproject>();
 }

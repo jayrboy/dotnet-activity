@@ -87,8 +87,10 @@ namespace activityCore.Models
         //  Update
         public static Project Update(ActivityContext db, Project project)
         {
-            Project oldProject = db.Projects.Include(p => p.Activities)
+            Project? oldProject = db.Projects.Include(p => p.Activities)
                                                 .ThenInclude(a => a.InverseActivityHeader)
+                                            .Include(f => f.FileXprojects)
+                                                .ThenInclude(f => f.File)
                                             .FirstOrDefault(p => p.Id == project.Id);
             // อัปเดตข้อมูลโปรเจกต์
             oldProject.Name = project.Name;
@@ -101,7 +103,7 @@ namespace activityCore.Models
             // อัปเดตกิจกรรม
             Activity.SetActivitiesUpdate(project, oldProject.Activities, project.Activities);
 
-            // SaveChanges เป็นการดำเนินการเก็บข้อมูลเข้า Database จะคืนค่า (Success, fail)
+            // SaveChanges เป็นการดำเนินการเก็บข้อมูลเข้า Database หากสำเร็จ Success / Fail ถ้าไม่สำเร็จจะเกิดข้อผิดพลาด
             db.SaveChanges();
 
             return oldProject;

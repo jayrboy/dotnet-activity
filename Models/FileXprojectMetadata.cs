@@ -20,5 +20,20 @@ namespace activityCore.Models
 
             return fileXproject;
         }
+
+        public static FileXproject GetById(ActivityContext db, int id)
+        {
+            FileXproject? result = db.FileXprojects.Where(q => q.Id == id && q.IsDelete != true).FirstOrDefault();
+            return result ?? new FileXproject();
+        }
+
+        public static FileXproject Update(ActivityContext db, FileXproject fileXproject)
+        {
+            fileXproject.UpdateDate = DateTime.Now;
+            db.Entry(fileXproject).State = EntityState.Modified;
+            db.SaveChanges();
+
+            return fileXproject;
+        }
     }
 }

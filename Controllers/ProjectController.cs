@@ -4,13 +4,14 @@ using activityCore.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace activityCore.Controllers
 {
     // [Authorize(Roles = "admin, user")]
     [ApiController]
     [Route("api/[controller]")]
-    [Produces("application/json")]
     public class ProjectController : ControllerBase
     {
         private ActivityContext _db = new ActivityContext();
@@ -187,6 +188,13 @@ namespace activityCore.Controllers
                     //(6) Save FileXproject Table
                     FileXproject.Create(_db, fileXproject);
                 }
+
+                return Ok(new Response
+                {
+                    Code = 200,
+                    Message = "Success",
+                    Data = projectFileCreate
+                });
             }
             catch (Exception e)
             {
@@ -197,13 +205,6 @@ namespace activityCore.Controllers
                     Data = null
                 });
             }
-
-            return Ok(new Response
-            {
-                Code = 200,
-                Message = "Success",
-                Data = projectFileCreate
-            });
         }
 
         /// <summary>
@@ -292,7 +293,7 @@ namespace activityCore.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public ActionResult UpdateProject([FromForm] Project project)
+        public ActionResult UpdateProject([FromBody] Project project)
         {
             try
             {
@@ -309,16 +310,11 @@ namespace activityCore.Controllers
                 });
             }
 
-            return project != null ? Ok(new Response
+            return Ok(new Response
             {
                 Code = 200,
                 Message = "Success",
                 Data = project
-            }) : StatusCode(404, new Response
-            {
-                Code = 404,
-                Message = "Failed to Project Not Found!",
-                Data = null
             });
         }
 
@@ -381,81 +377,78 @@ namespace activityCore.Controllers
         }
 
         /* ---------------------------------------- Testing (Response, Request) ---------------------------------------- */
-        //(1) Define [FromForm] to parameter Creating by Model "ProjectFileCreate" 
-
-        [HttpPost("Test", Name = "TestApi")]
-        public ActionResult TestRequest([FromForm] ProjectFileCreate projectFileCreate)
+        [HttpPost("Test")]
+        public ActionResult<Response> TestApiUpdate([FromForm] string project, List<IFormFile> formFile)
         {
-            //(2) [FromFrom] string Convert to (Json Serializer + Options)
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            ProjectCreate? projectJson = JsonSerializer.Deserialize<ProjectCreate>(projectFileCreate.projectCreate, options);
+            Project? projectJson = JsonSerializer.Deserialize<Project>(project, options);
 
-            //(3) Save Project Table
-            Project project = new Project
+            // //TODO: แก่ไข หรือ เพิ่มไฟล์เพิ่มจาก project.File ของเก่า และกรณีมีเพิ่มเข้ามาจาก formFile
+            // รับข้อมูล FromForm เอา product ID ไปหาข้อมูลโครงการเก่า
+            Project? updateProject = Project.GetById(_db, projectJson.Id);
+
+            // นำข้อมูลที่หา มากำหนดข้อมูลใหม่ เพื่ออัปเดทข้อมูลโครงการ
+            updateProject.Name = projectJson.Name;
+            updateProject.StartDate = projectJson.StartDate;
+            updateProject.EndDate = projectJson.EndDate;
+            updateProject.UpdateDate = DateTime.Now;
+            updateProject.IsDelete = projectJson.IsDelete;
+
+            Activity.SetActivitiesCreate(updateProject, updateProject.Activities, projectJson.Activities);
+
+
+            //TODO: แก้ไขไฟล์ที่มีอยู่ในโครงการ (จาก project เก่าที่ส่งมาแก้ไข)
+            foreach (Models.File f in projectJson.File.Where(q => q.IsDelete == true))
             {
-                Name = projectJson.Value.Name,
-                StartDate = projectJson.Value.StartDate,
-                EndDate = projectJson.Value.EndDate,
-            };
+                Models.File existingFile = Models.File.GetById(_db, f.Id);
 
-            try
-            {
-                Activity.SetActivitiesCreate(project, project.Activities, projectJson.Value.Activities);
-
-                // หลังจากที่สร้างกิจกรรมทั้งหมดแล้ว ก็เพิ่มลงในฐานข้อมูล
-                Project.Create(_db, project);
-
-                //(4) [FromForm] List<fromFile> 
-                foreach (IFormFile f in projectFileCreate.fromFile)
+                if (existingFile != null && existingFile.IsDelete != true)
                 {
-                    Models.File file = new Models.File
-                    {
-                        FileName = f.FileName,
-                        FilePath = "UploadedFile/ProjectFile/"
-                    };
-                    //(5) Save File Table
-                    Models.File.Create(_db, file);
-
-                    if (f != null && f.Length > 0)
-                    {
-                        string uploads = Path.Combine(_hostingEnvironment.ContentRootPath, "UploadedFile/ProjectFile/" + file.Id);
-
-                        Directory.CreateDirectory(uploads);
-                        string filePath = Path.Combine(uploads, f.FileName);
-
-                        using (Stream fileStream = new FileStream(filePath, FileMode.Create))
-                        {
-                            f.CopyTo(fileStream);
-                        }
-                    }
-
-                    FileXproject fileXproject = new FileXproject
-                    {
-                        ProjectId = project.Id,
-                        FileId = file.Id,
-                    };
-                    //(6) Save FileXproject Table
-                    FileXproject.Create(_db, fileXproject);
+                    existingFile.IsDelete = f.IsDelete;
+                    Models.File.Update(_db, existingFile);
                 }
             }
-            catch (Exception e)
+
+            //TODO: เพิ่มไฟล์ใหม่ (จาก formFile)
+            foreach (IFormFile f in formFile)
             {
-                return StatusCode(500, new Response
+                Models.File newFile = new Models.File
                 {
-                    Code = 500,
-                    Message = e.Message,
-                    Data = null
-                });
+                    FileName = f.FileName,
+                    FilePath = "UploadedFile/ProjectFile/",
+                };
+
+                Models.File.Create(_db, newFile); // เพิ่มข้อมูลเข้า File Table เพื่อที่จะเอา Id
+
+                if (f.Length > 0)
+                {
+                    string uploads = Path.Combine(_hostingEnvironment.ContentRootPath, "UploadedFile/ProjectFile/" + newFile.Id);
+                    Directory.CreateDirectory(uploads);
+
+                    string filePath = Path.Combine(uploads, f.FileName);
+                    using (Stream fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        f.CopyTo(fileStream);
+                    }
+                }
+
+                FileXproject fileXproject = new FileXproject
+                {
+                    ProjectId = updateProject.Id,
+                    FileId = newFile.Id
+                };
+
+                FileXproject.Create(_db, fileXproject);
             }
+
+            Project.Update(_db, updateProject);
 
             return Ok(new Response
             {
                 Code = 200,
                 Message = "Success",
-                Data = projectFileCreate
             });
         }
         /* ---------------------------------------- Testing (Response, Request) ---------------------------------------- */
-
     }
 }
