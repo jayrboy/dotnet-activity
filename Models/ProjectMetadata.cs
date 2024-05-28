@@ -44,7 +44,7 @@ namespace activityCore.Models
                 {
                     p.File = new List<File>();
 
-                    foreach (ProjectFile f in p.ProjectFiles)
+                    foreach (ProjectFile f in p.ProjectFiles.Where(p => p.File.IsDelete != true))
                     {
                         p.File.Add(f.File);
                     }
@@ -73,7 +73,7 @@ namespace activityCore.Models
             {
                 project.File = new List<File>();
 
-                foreach (ProjectFile f in project.ProjectFiles)
+                foreach (ProjectFile f in project.ProjectFiles.Where(p => p.File.IsDelete != true))
                 {
                     project.File.Add(f.File);
                 }
@@ -122,6 +122,12 @@ namespace activityCore.Models
             {
                 a.IsDelete = true;
             }
+
+            foreach (File f in project.File)
+            {
+                f.IsDelete = true;
+            }
+
             // db.Projects.Remove(project); // ลบหายทันที 
 
             db.SaveChanges();

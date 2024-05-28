@@ -186,11 +186,13 @@ namespace activityCore.Controllers
                     ProjectFile.Create(_db, projectFile);
                 }
 
+                project = Project.GetById(_db, project.Id);
+
                 return Ok(new Response
                 {
                     Code = 200,
                     Message = "Success",
-                    Data = projectFileCreate
+                    Data = project
                 });
             }
             catch (Exception e)
@@ -329,10 +331,13 @@ namespace activityCore.Controllers
 
                 Project.Update(_db, updateProject);
 
+                updateProject = Project.GetById(_db, updateProject.Id);
+
                 return Ok(new Response
                 {
                     Code = 200,
                     Message = "Success",
+                    Data = updateProject
                 });
                 // Add File
             }
