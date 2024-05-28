@@ -166,7 +166,8 @@ namespace activityCore.Controllers
                 Message = "Login Success",
                 Data = new
                 {
-                    token = bearerToken
+                    token = bearerToken,
+                    role = user.Role
                 }
             });
         }
