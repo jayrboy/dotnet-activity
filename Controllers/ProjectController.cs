@@ -134,11 +134,11 @@ namespace activityCore.Controllers
         [HttpPost(Name = "CreateProject")]
         public ActionResult<Response> CreateProject([FromForm] ProjectFileCreate projectFileCreate)
         {
-            //(2) [FromFrom] string Convert to (Json Serializer + Options)
+
+            //(1) [FromFrom] string Convert to (Json Serializer + Options)
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             ProjectCreate? projectJson = JsonSerializer.Deserialize<ProjectCreate>(projectFileCreate.projectCreate, options);
 
-            //(3) Save Project Table
             Project project = new Project
             {
                 Name = projectJson.Value.Name,
@@ -148,45 +148,49 @@ namespace activityCore.Controllers
 
             try
             {
-                Activity.SetActivitiesCreate(project, project.Activities, projectJson.Value.Activities);
+                if (!projectJson.Value.Activities.IsNullOrEmpty())
+                {
+                    Activity.SetActivitiesCreate(project, project.Activities, projectJson.Value.Activities);
+                }
 
                 // หลังจากที่สร้างกิจกรรมทั้งหมดแล้ว ก็เพิ่มลงในฐานข้อมูล
                 Project.Create(_db, project);
 
-                //(4) [FromForm] List<fromFile> 
-                foreach (IFormFile f in projectFileCreate.fromFile)
+                if (!projectFileCreate.fromFile.IsNullOrEmpty())
                 {
-                    Models.File file = new Models.File
+                    //(4) [FromForm] List<fromFile> 
+                    foreach (IFormFile f in projectFileCreate.fromFile)
                     {
-                        FileName = f.FileName,
-                        FilePath = "UploadedFile/ProjectFile/"
-                    };
-                    //(5) Save File Table
-                    Models.File.Create(_db, file);
-
-                    if (f != null && f.Length > 0)
-                    {
-                        string uploads = Path.Combine(_hostingEnvironment.ContentRootPath, "UploadedFile/ProjectFile/" + file.Id);
-
-                        Directory.CreateDirectory(uploads);
-                        string filePath = Path.Combine(uploads, f.FileName);
-
-                        using (Stream fileStream = new FileStream(filePath, FileMode.Create))
+                        Models.File file = new Models.File
                         {
-                            f.CopyTo(fileStream);
+                            FileName = f.FileName,
+                            FilePath = "UploadedFile/ProjectFile/"
+                        };
+                        //(5) Save File Table
+                        Models.File.Create(_db, file);
+
+                        if (f != null && f.Length > 0)
+                        {
+                            string uploads = Path.Combine(_hostingEnvironment.ContentRootPath, "UploadedFile/ProjectFile/" + file.Id);
+
+                            Directory.CreateDirectory(uploads);
+                            string filePath = Path.Combine(uploads, f.FileName);
+
+                            using (Stream fileStream = new FileStream(filePath, FileMode.Create))
+                            {
+                                f.CopyTo(fileStream);
+                            }
                         }
+
+                        ProjectFile projectFile = new ProjectFile
+                        {
+                            ProjectId = project.Id,
+                            FileId = file.Id,
+                        };
+                        //(6) Save FileXproject Table
+                        ProjectFile.Create(_db, projectFile);
                     }
-
-                    ProjectFile projectFile = new ProjectFile
-                    {
-                        ProjectId = project.Id,
-                        FileId = file.Id,
-                    };
-                    //(6) Save FileXproject Table
-                    ProjectFile.Create(_db, projectFile);
                 }
-
-                project = Project.GetById(_db, project.Id);
 
                 return Ok(new Response
                 {

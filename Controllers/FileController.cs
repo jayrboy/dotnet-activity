@@ -126,4 +126,35 @@ public class FileController : ControllerBase
         }
     }
 
+    [HttpGet("download/{id}", Name = "")]
+    public async Task<IActionResult> DownloadFile(int id)
+    {
+        // Get the file information from the database
+        Models.File file = Models.File.GetById(_db, id);
+        if (file == null)
+        {
+            return NotFound(new { Message = "File not found in the database." });
+        }
+
+        // Construct the file path
+        string filePath = Path.Combine(_hostingEnvironment.ContentRootPath, "UploadedFile\\ProjectFile", file.Id.ToString(), file.FileName);
+
+        // Check if the file exists
+        if (!System.IO.File.Exists(filePath))
+        {
+            return NotFound(new { Message = "File not found on the server." });
+        }
+
+        // Read the file into a memory stream
+        var memoryStream = new MemoryStream();
+        using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+        {
+            await stream.CopyToAsync(memoryStream);
+        }
+        memoryStream.Position = 0;
+
+        // Return the file as a download
+        return File(memoryStream, "application/octet-stream", file.FileName);
+    }
+
 }
