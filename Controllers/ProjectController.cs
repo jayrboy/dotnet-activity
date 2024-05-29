@@ -282,8 +282,7 @@ namespace activityCore.Controllers
                 updateProject.UpdateDate = DateTime.Now;
                 updateProject.IsDelete = projectJson.IsDelete;
 
-                Activity.SetActivitiesCreate(updateProject, updateProject.Activities, projectJson.Activities);
-
+                Activity.SetActivitiesUpdate(_db, updateProject, updateProject.Activities, projectJson.Activities);
 
                 //TODO: แก้ไขไฟล์ที่มีอยู่ในโครงการ (จาก project เก่าที่ส่งมาแก้ไข)
                 foreach (Models.File f in projectJson.File.Where(q => q.IsDelete == true))
@@ -298,40 +297,42 @@ namespace activityCore.Controllers
                 }
 
                 //TODO: เพิ่มไฟล์ใหม่ (จาก formFile)
-                foreach (IFormFile f in formFile)
+                if (formFile.Count > 0)
                 {
-                    Models.File newFile = new Models.File
+                    foreach (IFormFile f in formFile)
                     {
-                        FileName = f.FileName,
-                        FilePath = "UploadedFile/ProjectFile/",
-                    };
-
-                    Models.File.Create(_db, newFile); // เพิ่มข้อมูลเข้า File Table เพื่อที่จะเอา Id
-
-                    if (f.Length > 0)
-                    {
-                        string uploads = Path.Combine(_hostingEnvironment.ContentRootPath, "UploadedFile/ProjectFile/" + newFile.Id);
-                        Directory.CreateDirectory(uploads);
-
-                        string filePath = Path.Combine(uploads, f.FileName);
-                        using (Stream fileStream = new FileStream(filePath, FileMode.Create))
+                        Models.File newFile = new Models.File
                         {
-                            f.CopyTo(fileStream);
+                            FileName = f.FileName,
+                            FilePath = "UploadedFile/ProjectFile/",
+                        };
+
+                        Models.File.Create(_db, newFile); // เพิ่มข้อมูลเข้า File Table เพื่อที่จะเอา Id
+
+                        if (f.Length > 0)
+                        {
+                            string uploads = Path.Combine(_hostingEnvironment.ContentRootPath, "UploadedFile/ProjectFile/" + newFile.Id);
+                            Directory.CreateDirectory(uploads);
+
+                            string filePath = Path.Combine(uploads, f.FileName);
+                            using (Stream fileStream = new FileStream(filePath, FileMode.Create))
+                            {
+                                f.CopyTo(fileStream);
+                            }
                         }
+
+                        ProjectFile projectFile = new ProjectFile
+                        {
+                            ProjectId = updateProject.Id,
+                            FileId = newFile.Id
+                        };
+
+                        ProjectFile.Create(_db, projectFile);
                     }
-
-                    ProjectFile projectFile = new ProjectFile
-                    {
-                        ProjectId = updateProject.Id,
-                        FileId = newFile.Id
-                    };
-
-                    ProjectFile.Create(_db, projectFile);
                 }
 
-                Project.Update(_db, updateProject);
-
-                updateProject = Project.GetById(_db, updateProject.Id);
+                _db.SaveChanges();
+                // updateProject = Project.GetById(_db, updateProject.Id);
 
                 return Ok(new Response
                 {

@@ -101,7 +101,7 @@ namespace activityCore.Models
             oldProject.IsDelete = project.IsDelete;
 
             // อัปเดตกิจกรรม
-            Activity.SetActivitiesUpdate(project, oldProject.Activities, project.Activities);
+            Activity.SetActivitiesUpdate(db, project, oldProject.Activities, project.Activities);
 
             // SaveChanges เป็นการดำเนินการเก็บข้อมูลเข้า Database หากสำเร็จ Success / Fail ถ้าไม่สำเร็จจะเกิดข้อผิดพลาด
             db.SaveChanges();

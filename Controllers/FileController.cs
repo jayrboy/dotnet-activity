@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using activityCore.Data;
 using activityCore.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace activityCore.Controllers;
 
@@ -103,6 +104,26 @@ public class FileController : ControllerBase
             Message = "Success",
             Data = formFile
         });
+    }
+
+    [HttpDelete("{id}", Name = "DeleteById")]
+    public ActionResult<Response> DeleteFile(int id)
+    {
+        if (id != null)
+        {
+            Models.File file = Models.File.Delete(_db, id);
+
+            return Ok(new Response
+            {
+                Code = 200,
+                Message = "Success",
+                Data = file
+            });
+        }
+        else
+        {
+            return NotFound();
+        }
     }
 
 }

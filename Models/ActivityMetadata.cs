@@ -39,23 +39,26 @@ namespace activityCore.Models
         //TODO: สำหรับวนใส่ค่าให้กับตัวลูก. Method นี้เรียกใช้เมื่อสร้าง Project และ กิจกรรมต่างๆ
         public static void SetActivitiesCreate(Project project, ICollection<Activity> oldActivities, ICollection<Activity> newActivities)
         {
-            foreach (Activity subActivity in newActivities)  // ไปวนหาค่าภายใน activity 
+            if (!newActivities.IsNullOrEmpty())
             {
-                Activity newActivity = new Activity  // สร้าง activity ใหม่
+                foreach (Activity subActivity in newActivities)  // ไปวนหาค่าภายใน activity 
                 {
-                    Name = subActivity.Name,
-                    CreateDate = DateTime.Now,
-                    UpdateDate = DateTime.Now,
-                    IsDelete = false,
-                    Project = project,
-                };
-                SetActivitiesCreate(project, newActivity.InverseActivityHeader, subActivity.InverseActivityHeader);
-                oldActivities.Add(newActivity);
+                    Activity newActivity = new Activity  // สร้าง activity ใหม่
+                    {
+                        Name = subActivity.Name,
+                        CreateDate = DateTime.Now,
+                        UpdateDate = DateTime.Now,
+                        IsDelete = false,
+                        Project = project,
+                    };
+                    SetActivitiesCreate(project, newActivity.InverseActivityHeader, subActivity.InverseActivityHeader);
+                    oldActivities.Add(newActivity);
+                }
             }
         }
 
         //TODO: Update Project & Activities
-        public static void SetActivitiesUpdate(Project project, ICollection<Activity> oldActivities, ICollection<Activity> newActivities)
+        public static void SetActivitiesUpdate(ActivityContext db, Project project, ICollection<Activity> oldActivities, ICollection<Activity> newActivities)
         {
             foreach (Activity newActivity in newActivities)
             {
@@ -66,14 +69,21 @@ namespace activityCore.Models
 
                     if (existingActivity != null)
                     {
+                        db.Entry(existingActivity).State = EntityState.Modified;  // Ensure EF is tracking the entity
+
                         // ถ้ามีข้อมูลเก่า ก็อัปเดตข้อมูลของ activity ที่มีอยู่
+                        existingActivity.ProjectId = newActivity.ProjectId;
                         existingActivity.Name = newActivity.Name;
                         existingActivity.UpdateDate = DateTime.Now;
                         existingActivity.IsDelete = newActivity.IsDelete;
+                        db.SaveChanges();
                     }
 
+                    // Ensuring newActivity.ProjectId is correctly set
+                    newActivity.ProjectId = existingActivity?.ProjectId ?? newActivity.ProjectId;
+
                     // อัปเดตข้อมูลลูกของ activity นี้
-                    SetActivitiesUpdate(project, existingActivity.InverseActivityHeader, newActivity.InverseActivityHeader);
+                    SetActivitiesUpdate(db, project, existingActivity.InverseActivityHeader, newActivity.InverseActivityHeader);
                 }
                 else
                 {
@@ -88,8 +98,7 @@ namespace activityCore.Models
                     };
 
                     // อัปเดตข้อมูลลูกของ activity ที่สร้างใหม่
-                    SetActivitiesUpdate(project, newAct.InverseActivityHeader, newActivity.InverseActivityHeader);
-
+                    SetActivitiesUpdate(db, project, newAct.InverseActivityHeader, newActivity.InverseActivityHeader);
                     // เพิ่ม activity ที่สร้างใหม่ลงในกิจกรรมเก่า
                     oldActivities.Add(newAct);
                 }
