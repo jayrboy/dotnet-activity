@@ -78,11 +78,11 @@ namespace activityCore.Controllers
             var key = Encoding.UTF8.GetBytes(TokenSecret);
 
             var claims = new List<Claim>
-        {
+            {
             new Claim(ClaimTypes.Name, user.Username),
             new Claim(ClaimTypes.Role, user.Role) //TODO: Add Role parameter
             // Add more claims as needed
-        };
+            };
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -144,6 +144,12 @@ namespace activityCore.Controllers
         public IActionResult Login([FromBody] User request)
         {
             User? user = _db.Users.FirstOrDefault(doc => doc.Username == request.Username && doc.Password == request.Password && doc.IsDelete == false);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+            
             string bearerToken;
 
             try
